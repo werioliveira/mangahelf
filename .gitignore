@@ -46,3 +46,7 @@ Thumbs.db
 # Cobertura / relatórios
 coverage/
 coverage.txt
+
+.env.*
+!.env.example
+*.tsbuildinfo

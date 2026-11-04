@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tokens extraídos do design base (base44html/index-Dy0lqq26.css) */
+@layer base {
+  :root {
+    --background: 240 10% 6%;
+    --foreground: 0 0% 95%;
+    --card: 240 8% 9%;
+    --card-foreground: 0 0% 95%;
+    --popover: 240 8% 9%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 6% 14%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 240 5% 16%;
+    --muted-foreground: 240 5% 55%;
+    --accent: 187 92% 42%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 6% 18%;
+    --input: 240 6% 18%;
+    --ring: 239 84% 67%;
+    --radius: 0.75rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Número do ranking com contorno primário, igual ao carrossel Top 10 do design */
+  .rank-stroke {
+    -webkit-text-stroke: 2px hsl(var(--primary));
+    color: transparent;
+    filter: drop-shadow(0 2px 8px hsl(var(--primary) / 0.3));
+  }
+
+  .animate-glow-pulse {
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.5s ease both;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
