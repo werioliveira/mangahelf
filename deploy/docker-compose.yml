@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: postgres:16
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_USER: mangashelf
+      POSTGRES_PASSWORD: mangashelf
+      POSTGRES_DB: mangashelf
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+
+  meilisearch:
+    image: getmeili/meilisearch:latest
+    profiles: ["meilisearch"]
+    ports: ["7700:7700"]
+    environment:
+      MEILI_MASTER_KEY: mude-em-producao
+    volumes: ["meilisearch_data:/meili_data"]
+
+  redis:
+    image: redis:7-alpine
+    profiles: ["redis"]
+    ports: ["6379:6379"]
+
+  imgproxy:
+    image: darthsim/imgproxy:v3
+    profiles: ["imgproxy"]
+    ports: ["8080:8080"]
+    environment:
+      IMGPROXY_BIND: ":8080"
+      IMGPROXY_LOCAL_FILESYSTEM_ROOT: /data
+      IMGPROXY_USE_ETAG: "true"
+      IMGPROXY_SEND_CORS_HEADER: "true"
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.api
+    depends_on: [postgres]
+    environment:
+      - DATABASE_URL
+      - STORAGE_DRIVER
+      - SEARCH_DRIVER
+      - IMAGE_PIPELINE
+      - CACHE_DRIVER
+      - AUTH_DRIVER
+      - SESSION_SECRET
+      - DATA_DIR
+    ports: ["8080:8080"]
+
+  worker:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.worker
+    depends_on: [postgres]
+    environment:
+      - DATABASE_URL
+      - STORAGE_DRIVER
+      - IMAGE_PIPELINE
+      - DATA_DIR
+
+volumes:
+  pgdata:
+  meilisearch_data:

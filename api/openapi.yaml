@@ -1,0 +1,22 @@
+openapi: 3.0.3
+info:
+  title: MangaShelf API
+  version: v1
+  description: API do MangaShelf (manga hosting self-hosted)
+servers:
+  - url: /api/v1
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: ok
+  /v1/series:
+    get:
+      summary: Lista series
+      responses:
+        '200':
+          description: OK
+components:
+  schemas: {}

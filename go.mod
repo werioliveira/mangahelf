@@ -1,1 +1,15 @@
-`ngo 1.22`n`nrequire (`ngithub.com/go-chi/chi/v5 v1.5.4`ngithub.com/google/uuid v1.6.0`ngithub.com/lib/pq v1.10.9`ngithub.com/golang-jwt/jwt/v5 v5.2.1`ngithub.com/google/go-cmp v0.6.0`ngithub.com/stretchr/testify v1.9.0`ngithub.com/joho/godotenv v1.5.0`ngithub.com/samber/lo v1.38.0`ngithub.com/uuidassert v0.0.0`n)`n]`nreplace (`ngithub.com/google/uuid => github.com/google/uuid v1.6.0`n)
+module github.com/mangashelf/mangashelf
+
+go 1.26.0
+
+require (
+	github.com/go-chi/chi/v5 v5.1.0
+	github.com/gorilla/sessions v1.4.0
+	github.com/lib/pq v1.12.3
+	golang.org/x/crypto v0.58.0
+)
+
+require (
+	github.com/gorilla/securecookie v1.1.2 // indirect
+	golang.org/x/sys v0.49.0 // indirect
+)
