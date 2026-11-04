@@ -17,6 +17,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Diretorio externo/desconhecido (nao comitar)
+base44html/
+
 # Node / Next.js
 node_modules/
 .next/
