@@ -48,8 +48,16 @@
 - `deploy/docker-compose.yml` — perfil `s3` com MinIO (exemplo de desenvolvimento; produção pode usar R2, B2, Garage ou SeaweedFS)
 - `deploy/.env.example` — `STORAGE_DRIVER=s3`, variáveis S3 documentadas
 
+### Upload de mídia direto para storage (presigned URL)
+- `internal/services/media.go` — `MediaService`: `PresignUpload` (gera presigned URL PUT + storage_key), `CreateUpload` (cria capítulo em estado `processing`), `ValidateMagicBytes` (ZIP, JPEG, PNG, WebP)
+- `internal/adapters/httpapi/media.go` — handlers `POST /uploads/presign` e `POST /uploads`, com autenticação via sessão cookie
+- `cmd/api/main.go` — registra rotas de upload quando `DATABASE_URL` definida
+- Fluxo: navegador faz PUT direto para `upload_url` (presigned S3 — bytes não passam pelo Go), depois `POST /uploads` cria capítulo em `processing`
+- Validação E2E contra Postgres ao vivo (storage local): registro 201 → login 200 → criar série 201 → presign 200 → criar upload 201 → capítulo em processing 200
+
 ### Não incluído (escopo deliberado / YAGNI)
-- `apps/web/` (Next.js vazio — Fase 1 posterior)
+- `apps/web/` (Next.js vazio — frontend existe como stub; painel de upload vem na Fase 1 posterior)
+- Worker ainda não processa jobs de mídia (entrypoint existe como stub; capítulo fica em `processing` até o worker ser implementado)
 - Adapter search/postgres e auth/builtin ainda são stubs (`errNotImplemented`)
 - sqlc, oauth, meilisearch/redis/imgproxy (desativados, rodam no WSL)
 - Testes de integração com banco real

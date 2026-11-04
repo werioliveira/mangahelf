@@ -65,7 +65,6 @@ func main() {
 		storage = local.New(cfg.DataDir)
 		slog.Info("storage local inicializado", "dir", cfg.DataDir)
 	}
-	_ = storage
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -90,6 +89,11 @@ func main() {
 		catalogHandler := httpapi.NewCatalogHandler(seriesSvc, chapterSvc)
 		catalogHandler.RegisterRoutes(r)
 		slog.Info("rotas de catalogo registradas")
+
+		mediaSvc := services.NewMediaService(db, storage, cfg, authSvc)
+		mediaHandler := httpapi.NewMediaHandler(mediaSvc, authSvc)
+		mediaHandler.RegisterRoutes(r)
+		slog.Info("rotas de upload registradas")
 	} else {
 		slog.Warn("DATABASE_URL nao definida; rotas de auth e catalogo indisponiveis")
 	}
