@@ -58,8 +58,14 @@ func main() {
 		authHandler := httpapi.NewAuthHandler(authSvc)
 		authHandler.RegisterRoutes(r)
 		slog.Info("rotas de auth registradas")
+
+		seriesSvc := services.NewSeriesService(db)
+		chapterSvc := services.NewChapterService(db)
+		catalogHandler := httpapi.NewCatalogHandler(seriesSvc, chapterSvc)
+		catalogHandler.RegisterRoutes(r)
+		slog.Info("rotas de catalogo registradas")
 	} else {
-		slog.Warn("DATABASE_URL nao definida; rotas de auth indisponiveis")
+		slog.Warn("DATABASE_URL nao definida; rotas de auth e catalogo indisponiveis")
 	}
 
 	srv := &http.Server{

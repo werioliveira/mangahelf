@@ -28,13 +28,17 @@
 - `README.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`
 - `.gitignore` — ambiente, segredos, storage local, logs, node_modules, .next, IDE
 
-### Fase 1 — Autenticação (validada E2E)
+### Fase 1 — Autenticação e Catálogo (validadas E2E)
 - Deps: `golang.org/x/crypto` (argon2id), `github.com/gorilla/sessions`
 - `internal/services/auth.go` — hash argon2id, `Register`, `Login`, sessão cookie httpOnly, `SaveSession`/`ClearSession`/`UserIDFromSession`
 - `internal/adapters/httpapi/auth.go` — handlers `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`
-- `cmd/api/main.go` — abre conexão com Postgres (`DATABASE_URL`), registra rotas de auth
+- `internal/services/series.go` — `SeriesService`: `Create`, `List`, `Get`, `Update`, `Delete` (tabela `series`)
+- `internal/services/chapter.go` — `ChapterService`: `Create`, `List`, `Get`, `Update`, `Delete` (tabela `chapters`)
+- `internal/adapters/httpapi/catalog.go` — handlers `GET/POST/PUT/DELETE /series`, `GET/POST/PUT/DELETE /chapters`
+- `cmd/api/main.go` — abre conexão com Postgres (`DATABASE_URL`), registra rotas de auth + catálogo
 - `internal/services/auth_test.go` — teste de hash/verify
 - Validação E2E contra Postgres ao vivo: registro 201 → login 200 → `/auth/me` 200 → logout 204 → `/auth/me` 401
+- Validação E2E catálogo contra Postgres ao vivo: criar série 201 → listar 200 → criar capítulo 201 → listar 200 → obter 200 → atualizar 200 → deletar capítulo 204 → deletar série 204
 
 ### Não incluído (escopo deliberado / YAGNI)
 - `apps/web/` (Next.js vazio — Fase 1 posterior)
