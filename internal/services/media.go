@@ -131,8 +131,8 @@ func (m *MediaService) CreateUpload(ctx context.Context, userID string, in Creat
 
 	var id string
 	err = m.db.QueryRowContext(ctx,
-		"INSERT INTO chapters (series_id, number, title, state, access) VALUES ($1, $2, $3, 'processing', 'public') RETURNING id",
-		in.SeriesID, in.ChapterNumber, in.Title,
+		"INSERT INTO chapters (series_id, number, title, state, access, storage_key) VALUES ($1, $2, $3, 'processing', 'public', $4) RETURNING id",
+		in.SeriesID, in.ChapterNumber, in.Title, in.StorageKey,
 	).Scan(&id)
 	if err != nil {
 		return CreateUploadOutput{}, err

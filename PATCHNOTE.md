@@ -55,6 +55,13 @@
 - Fluxo: navegador faz PUT direto para `upload_url` (presigned S3 — bytes não passam pelo Go), depois `POST /uploads` cria capítulo em `processing`
 - Validação E2E contra Postgres ao vivo (storage local): registro 201 → login 200 → criar série 201 → presign 200 → criar upload 201 → capítulo em processing 200
 
+### Worker de mídia (concluído)
+- `cmd/worker/main.go` — worker com polling em `chapters WHERE state='processing'` (FOR UPDATE SKIP LOCKED para evitar processamento duplicado)
+- Extrai ZIP, ordena páginas por nome, grava cada página no storage com chave `pages/{series_id}/{chapter_number}/{page}_{sha256}.{ext}` (dedup por hash de conteúdo)
+- Publica capítulo (`state='published'`) após gravar todas as páginas
+- Modo imgproxy padrão: não gera variantes (imgproxy faz isso em tempo de resposta); modo static preparo para variantes futura
+- Validação E2E contra Postgres ao vivo: ZIP com 3 páginas → worker processa → capítulo `processing` → `published`
+
 ### Não incluído (escopo deliberado / YAGNI)
 - `apps/web/` (Next.js vazio — frontend existe como stub; painel de upload vem na Fase 1 posterior)
 - Worker ainda não processa jobs de mídia (entrypoint existe como stub; capítulo fica em `processing` até o worker ser implementado)
