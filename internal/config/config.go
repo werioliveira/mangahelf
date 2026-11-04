@@ -41,7 +41,7 @@ func Load() (*Config, error) {
 		Port:           getenv("PORT", "8080"),
 		DatabaseURL:    getenv("DATABASE_URL", ""),
 		DataDir:        getenv("DATA_DIR", "./data"),
-		StorageDriver:  getenv("STORAGE_DRIVER", "local"),
+		StorageDriver:  getenv("STORAGE_DRIVER", "s3"),
 		SearchDriver:   getenv("SEARCH_DRIVER", "postgres"),
 		ImagePipeline:  getenv("IMAGE_PIPELINE", "imgproxy"),
 		CacheDriver:    getenv("CACHE_DRIVER", "memory"),
@@ -85,7 +85,7 @@ func (c *Config) validate() error {
 			return fmt.Errorf("config: %s=%q invalido (opcoes: %v)", k, v, allowed)
 		}
 	}
-	if c.ImagePipeline == "static" && c.StorageDriver == "s3" && c.S3Bucket == "" {
+	if c.StorageDriver == "s3" && c.S3Bucket == "" {
 		return fmt.Errorf("config: S3_BUCKET e obrigatorio quando STORAGE_DRIVER=s3")
 	}
 	if c.AuthDriver == "builtin" && c.SessionSecret == "" {

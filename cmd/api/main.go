@@ -14,8 +14,11 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	_ "github.com/lib/pq"
 	"github.com/mangashelf/mangashelf/internal/adapters/httpapi"
+	"github.com/mangashelf/mangashelf/internal/adapters/storage/local"
+	"github.com/mangashelf/mangashelf/internal/adapters/storage/s3"
 	"github.com/mangashelf/mangashelf/internal/config"
 	"github.com/mangashelf/mangashelf/internal/services"
+	"github.com/mangashelf/mangashelf/internal/ports"
 )
 
 func main() {
@@ -40,6 +43,29 @@ func main() {
 		}
 		slog.Info("banco conectado")
 	}
+
+	var storage ports.Storage
+	switch cfg.StorageDriver {
+	case "s3":
+		st, err := s3.New(s3.S3Config{
+			Endpoint:        cfg.S3Endpoint,
+			Region:          cfg.S3Region,
+			Bucket:          cfg.S3Bucket,
+			AccessKey:       cfg.S3AccessKey,
+			SecretKey:       cfg.S3SecretKey,
+			ForcePathStyle:  cfg.S3ForcePathStyle,
+		})
+		if err != nil {
+			slog.Error("falha ao inicializar storage s3", "err", err)
+			os.Exit(1)
+		}
+		storage = st
+		slog.Info("storage s3 inicializado", "bucket", cfg.S3Bucket, "endpoint", cfg.S3Endpoint)
+	case "local":
+		storage = local.New(cfg.DataDir)
+		slog.Info("storage local inicializado", "dir", cfg.DataDir)
+	}
+	_ = storage
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)

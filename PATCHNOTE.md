@@ -40,8 +40,16 @@
 - Validação E2E contra Postgres ao vivo: registro 201 → login 200 → `/auth/me` 200 → logout 204 → `/auth/me` 401
 - Validação E2E catálogo contra Postgres ao vivo: criar série 201 → listar 200 → criar capítulo 201 → listar 200 → obter 200 → atualizar 200 → deletar capítulo 204 → deletar série 204
 
+### Storage S3-compatível primário
+- `STORAGE_DRIVER` padrão agora é `s3` (era `local`)
+- `internal/adapters/storage/s3/s3.go` — adapter S3 funcional com `aws-sdk-go-v2` (v1.47.5+): `Put`, `Get`, `Delete`, `Presign` (PUT/GET), `List`; suporte a endpoint customizado, `S3_FORCE_PATH_STYLE`, credenciais estáticas ou IAM role
+- `internal/config/config.go` — validação: `S3_BUCKET` obrigatório quando `STORAGE_DRIVER=s3`
+- `internal/adapters/storage/local/local.go` — mantido como fallback/opcional (`STORAGE_DRIVER=local`)
+- `deploy/docker-compose.yml` — perfil `s3` com MinIO (exemplo de desenvolvimento; produção pode usar R2, B2, Garage ou SeaweedFS)
+- `deploy/.env.example` — `STORAGE_DRIVER=s3`, variáveis S3 documentadas
+
 ### Não incluído (escopo deliberado / YAGNI)
 - `apps/web/` (Next.js vazio — Fase 1 posterior)
-- Implementação real dos adaptadores s3/postgres/auth (marcados `errNotImplemented`)
+- Adapter search/postgres e auth/builtin ainda são stubs (`errNotImplemented`)
 - sqlc, oauth, meilisearch/redis/imgproxy (desativados, rodam no WSL)
 - Testes de integração com banco real
