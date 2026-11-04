@@ -1,0 +1,6 @@
+# Regras Fundamentais do Cline
+
+1. **Sempre verifique as Skills:** Antes de propor modificações no código ou responder dúvidas técnicas, você DEVE ler e seguir todas as skills armazenadas na pasta `skills-mangashelf`.
+2. **Validação de Documentação:** Para qualquer dependência do projeto, verifique as instruções de documentação contidas em `skills-mangashelf/fetch-docs.md`.
+3. **Prioridade:** Se houver conflito entre o seu conhecimento prévio e as orientações das skills locais, as instruções das skills locais sempre têm prioridade absoluta.
+4. **Ambiente:** Lembre-se sempre que os comandos são executados dentro do windows no powershell
