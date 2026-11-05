@@ -12,19 +12,21 @@ $envFile = Join-Path $rootDir ".env"
 if (Test-Path $envFile) {
     Get-Content $envFile | ForEach-Object {
         if ($_ -match "^([^=]+)=(.*)$") {
-            $env:$Matches[1] = $Matches[2]
+            Set-Item -Path "env:$($Matches[1])" -Value $Matches[2]
         }
     }
 }
 
 # Define NEXT_PUBLIC_API_URL se não estiver definida
-if (-not $env:NEXT_PUBLIC_API_URL) {
-    $env:NEXT_PUBLIC_API_URL = "http://localhost:8080"
-    Write-Host "NEXT_PUBLIC_API_URL não definida, usando padrão: $env:NEXT_PUBLIC_API_URL" -ForegroundColor Yellow
+$apiUrlItem = Get-Item -Path "env:NEXT_PUBLIC_API_URL" -ErrorAction SilentlyContinue
+if (-not $apiUrlItem) {
+    Set-Item -Path "env:NEXT_PUBLIC_API_URL" -Value "http://localhost:8080"
+    Write-Host "NEXT_PUBLIC_API_URL não definida, usando padrão: http://localhost:8080" -ForegroundColor Yellow
 }
+$apiUrl = (Get-Item -Path "env:NEXT_PUBLIC_API_URL").Value
 
 Write-Host "Iniciando MangaShelf Frontend (Next.js) em http://localhost:3000 ..." -ForegroundColor Cyan
-Write-Host "NEXT_PUBLIC_API_URL: $env:NEXT_PUBLIC_API_URL" -ForegroundColor Gray
+Write-Host "NEXT_PUBLIC_API_URL: $apiUrl" -ForegroundColor Gray
 
 Set-Location $webDir
 npm run dev
