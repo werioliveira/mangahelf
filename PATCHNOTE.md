@@ -132,3 +132,12 @@
 - `npm run db:migrate` — aplica migrations 0001, 0002, 0003, 0004, 0005 no Postgres
 - `npm run db:reset` — drop schema público e reaplica migrations
 - `.env.example` — variáveis de ambiente para desenvolvimento
+
+### Scan de Conformidade — Vercel React Best Practices
+- `SCAN-VERCEL.md` — relatório detalhado de conformidade com as 40+ regras da skill
+- **Veredito:** Boa conformidade com regras críticas (Eliminating Waterfalls, Bundle Size, Server-Side Performance)
+- **Regras conforme:** 11 (2.1, 2.5, 3.5, 3.6, 5.1, 5.4, 5.11, 5.15, 6.9, 7.13, 7.14)
+- **Perciais/aceitáveis:** 2 (1.5 dependências, 4.3 fetch nativo vs SWR)
+- **Não conforme:** 0 (nenhum gap crítico)
+- **Não aplicáveis:** 27 (não se aplicam ao estágio atual)
+- Melhorias opcionais: considerar SWR para dedup automático se requisições crescerem

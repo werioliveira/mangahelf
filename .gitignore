@@ -50,3 +50,9 @@ coverage.txt
 .env.*
 !.env.example
 *.tsbuildinfo
+
+# Skills / agentes instalados via npx skills
+.agents/
+.claude/
+agent/
+skills-lock.json
