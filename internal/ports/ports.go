@@ -89,10 +89,13 @@ type Credentials struct {
 type User struct {
 	ID        string
 	Email     string
+	Name      string
 	PasswordHash string
 	Roles     []string
 	Groups    []string
 	IsActive  bool
+	CreatedAt string
+	UpdatedAt string
 }
 
 // Authorizer resolve permissões atômicas (sempre implementação própria).

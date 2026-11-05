@@ -21,6 +21,8 @@ import (
 	"github.com/mangashelf/mangashelf/internal/adapters/storage/s3"
 	"github.com/mangashelf/mangashelf/internal/config"
 	"github.com/mangashelf/mangashelf/internal/services"
+	serviceAuth "github.com/mangashelf/mangashelf/internal/services/auth"
+	"github.com/mangashelf/mangashelf/internal/services/oidc"
 	"github.com/mangashelf/mangashelf/internal/ports"
 )
 
@@ -119,6 +121,25 @@ func main() {
 		settingsHandler := httpapi.NewSettingsHandler(settingsSvc, authSvc)
 		settingsHandler.RegisterRoutes(r)
 		slog.Info("rotas de configuracoes registradas")
+
+		// OIDC / OAuth2
+		authService := serviceAuth.New(db)
+		oidcSvc := oidc.NewAuthService(db, authService)
+		oidcHandler := httpapi.NewOIDCHandler(oidcSvc, authService)
+		oidcHandler.RegisterRoutes(r)
+
+		// Registrar provedores OAuth/OIDC se configurados
+		if cfg.OIDCGoogleClientID != "" && cfg.OIDCGoogleClientSecret != "" {
+			googleProvider := oidc.GoogleConfig(cfg.OIDCGoogleClientID, cfg.OIDCGoogleClientSecret)
+			oidc.RegisterProvider("google", googleProvider)
+			slog.Info("provedor OIDC Google registrado")
+		}
+		if cfg.OIDCGitHubClientID != "" && cfg.OIDCGitHubClientSecret != "" {
+			githubProvider := oidc.GitHubConfig(cfg.OIDCGitHubClientID, cfg.OIDCGitHubClientSecret)
+			oidc.RegisterProvider("github", githubProvider)
+			slog.Info("provedor OIDC GitHub registrado")
+		}
+		slog.Info("rotas de OIDC registradas")
 
 		// Busca: escolher engine baseado na config
 		var searchEngine ports.SearchEngine = postgres.New(db)

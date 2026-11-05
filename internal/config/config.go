@@ -30,6 +30,11 @@ type Config struct {
 	ImgproxySalt    string
 	MeilisearchURL  string
 	MeilisearchAPIKey string
+	// OIDC / OAuth2 providers
+	OIDCGoogleClientID     string
+	OIDCGoogleClientSecret string
+	OIDCGitHubClientID     string
+	OIDCGitHubClientSecret string
 	ReadTimeout     time.Duration
 	WriteTimeout    time.Duration
 	IdleTimeout     time.Duration
@@ -65,6 +70,11 @@ func Load() (*Config, error) {
 		ImgproxySalt:     getenv("IMGPROXY_SALT", ""),
 		MeilisearchURL:   getenv("MEILISEARCH_URL", ""),
 		MeilisearchAPIKey:getenv("MEILISEARCH_API_KEY", ""),
+		// OIDC / OAuth2 providers
+		OIDCGoogleClientID:     getenv("OIDC_GOOGLE_CLIENT_ID", ""),
+		OIDCGoogleClientSecret: getenv("OIDC_GOOGLE_CLIENT_SECRET", ""),
+		OIDCGitHubClientID:     getenv("OIDC_GITHUB_CLIENT_ID", ""),
+		OIDCGitHubClientSecret: getenv("OIDC_GITHUB_CLIENT_SECRET", ""),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
