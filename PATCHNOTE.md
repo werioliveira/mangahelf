@@ -86,3 +86,16 @@
   - Capítulo vip_only + não-VIP: 403
   - Capítulo early com public_at futuro + não-VIP: 403
   - Frontend Next.js build: `next build` passa (11 rotas, dinâmica `/manga/[slug]/capitulos/[n]` server-rendered)
+
+### Scripts de desenvolvimento (raiz)
+- `npm run dev` — inicia backend + frontend em paralelo (concurrently)
+- `npm run dev:backend` — inicia API Go (scripts/dev-backend.ps1)
+- `npm run dev:frontend` — inicia Next.js (apps/web)
+- `npm run build:backend` — `go build ./cmd/...`
+- `npm run build:frontend` — `cd apps/web && npm run build`
+- `npm run build` — build completo (backend + frontend)
+- `npm run test` — `go test ./...` + testes do frontend
+- `npm run lint` — `go vet ./...` + lint do frontend
+- `npm run db:migrate` — aplica migrations 0001, 0002, 0003 no Postgres
+- `npm run db:reset` — drop schema público e reaplica migrations
+- `.env.example` — variáveis de ambiente para desenvolvimento
