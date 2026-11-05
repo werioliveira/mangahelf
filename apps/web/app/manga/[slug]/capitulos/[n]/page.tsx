@@ -4,13 +4,14 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { bySlug } from "@/lib/data";
+import { lookupChapterPages } from "@/lib/api";
 
 type Props = { params: Promise<{ slug: string; n: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, n } = await params;
   const s = bySlug(slug);
-  return { title: s ? `Capítulo ${n}` : "Capítulo", robots: { index: false } };
+  return { title: s ? `Capítulo ${n} · ${s.title}` : "Capítulo", robots: { index: false } };
 }
 
 const navBtn =
@@ -20,11 +21,14 @@ export default async function ChapterPage({ params }: Props) {
   const { slug, n } = await params;
   const s = bySlug(slug);
   const num = Number(n);
+
   if (!s || !Number.isInteger(num) || num < 1 || num > s.chapters) notFound();
 
-  // shortcut: páginas placeholder (a capa repetida) até o worker de uploads servir
-  // as páginas reais em /api/v1/chapters/:n/pages
-  const pages = [1, 2, 3];
+  // Busca capítulo e páginas reais da API Go (upload direto para storage via presigned URL)
+  const data = await lookupChapterPages(slug, num, "full");
+  if (!data) notFound();
+
+  const { chapter, pages } = data;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
@@ -33,7 +37,7 @@ export default async function ChapterPage({ params }: Props) {
           <ChevronLeft className="w-4 h-4" />
           <span className="line-clamp-1">{s.title}</span>
         </Link>
-        <span className="text-sm font-semibold text-foreground whitespace-nowrap">Capítulo {num}</span>
+        <span className="text-sm font-semibold text-foreground whitespace-nowrap">Capítulo {chapter.number}</span>
         <div className="flex gap-1.5">
           {num > 1 ? (
             <Link aria-label="Capítulo anterior" href={`${num - 1}`} className={navBtn}>
@@ -58,10 +62,10 @@ export default async function ChapterPage({ params }: Props) {
 
       <div className="space-y-4">
         {pages.map((p) => (
-          <div key={p} className="relative w-full aspect-[2/3] rounded-xl overflow-hidden ring-1 ring-white/5 bg-card">
-            <Image src={s.cover} alt={`Página ${p}`} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" />
+          <div key={p.number} className="relative w-full aspect-[2/3] rounded-xl overflow-hidden ring-1 ring-white/5 bg-card">
+            <Image src={p.url} alt={`Página ${p.number}`} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" />
             <span className="absolute bottom-2 right-2 px-2 py-0.5 text-[10px] font-bold text-white bg-black/60 backdrop-blur-sm rounded-md">
-              Página {p} · placeholder
+              Página {p.number}
             </span>
           </div>
         ))}

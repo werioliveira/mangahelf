@@ -75,15 +75,14 @@
   - `vip_only`: apenas VIPs (ou a partir de `public_at` opcional)
 - `migrations/0003_add_pages_table/{up,down}.sql` — tabela `pages` (chapter_id, number, storage_key, width, height)
 - `internal/adapters/httpapi/reader.go` — handler `GET /chapters/{id}/pages` com validação de CanRead
-- `cmd/api/main.go` — registra rotas de leitor quando `DATABASE_URL` definida
+- `internal/adapters/httpapi/catalog.go` — handler `GET /chapters/lookup?series_slug=X&number=Y` para resolver chapter_id
+- `internal/services/chapter.go` — `ChapterService.LookupBySeriesAndNumber`
+- `cmd/api/main.go` — registra rotas de leitor e lookup quando `DATABASE_URL` definida
 - `deploy/.env.example` — variáveis IMGPROXY_BASE_URL, IMGPROXY_KEY, IMGPROXY_SALT
+- `apps/web/lib/api.ts` — client TS: `lookupChapter`, `getChapterPages`, `lookupChapterPages`
+- `apps/web/app/manga/[slug]/capitulos/[n]/page.tsx` — páginas reais da API (substitui placeholders)
 - Validação E2E contra Postgres ao vivo:
   - Capítulo public: 200 (retorna páginas com URLs)
   - Capítulo vip_only + não-VIP: 403
   - Capítulo early com public_at futuro + não-VIP: 403
-
-### Não incluído (escopo deliberado / YAGNI)
-- `apps/web/` — frontend Next.js 15 existente (App Router, Tailwind, componentes prontos); painel de upload/admin ainda são stubs (página admin diz "Painel em construção")
-- Adapter search/postgres e auth/builtin ainda são stubs (`errNotImplemented`)
-- sqlc, oauth, meilisearch/redis/imgproxy (desativados, rodam no WSL)
-- Testes de integração com banco real
+  - Frontend Next.js build: `next build` passa (11 rotas, dinâmica `/manga/[slug]/capitulos/[n]` server-rendered)

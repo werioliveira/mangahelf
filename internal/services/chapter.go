@@ -167,4 +167,29 @@ func (s *ChapterService) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
+func (s *ChapterService) LookupBySeriesAndNumber(ctx context.Context, seriesSlug string, number int) (Chapter, error) {
+	if seriesSlug == "" {
+		return Chapter{}, errors.New("series_slug e obrigatorio")
+	}
+	if number <= 0 {
+		return Chapter{}, errors.New("numero deve ser maior que zero")
+	}
+	var ch Chapter
+	var pubAt sql.NullTime
+	err := s.db.QueryRowContext(ctx,
+		`SELECT c.id, c.series_id, c.number, c.title, c.state, c.access, c.public_at, c.created_at, c.updated_at
+		 FROM chapters c
+		 JOIN series s ON s.id = c.series_id
+		 WHERE s.slug=$1 AND c.number=$2`,
+		seriesSlug, number,
+	).Scan(&ch.ID, &ch.SeriesID, &ch.Number, &ch.Title, &ch.State, &ch.Access, &pubAt, new(string), new(string))
+	if err != nil {
+		return Chapter{}, err
+	}
+	if pubAt.Valid {
+		ch.PublicAt = &pubAt.Time
+	}
+	return ch, nil
+}
+
 

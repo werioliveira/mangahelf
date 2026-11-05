@@ -1,8 +1,11 @@
 package httpapi
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mangashelf/mangashelf/internal/services"
@@ -31,6 +34,7 @@ func (h *CatalogHandler) RegisterRoutes(r chi.Router) {
 		r.Get("/{id}", h.getChapter)
 		r.Put("/{id}", h.updateChapter)
 		r.Delete("/{id}", h.deleteChapter)
+		r.Get("/lookup", h.lookupChapter)
 	})
 }
 
@@ -154,6 +158,37 @@ func (h *CatalogHandler) deleteChapter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *CatalogHandler) lookupChapter(w http.ResponseWriter, r *http.Request) {
+	seriesSlug := r.URL.Query().Get("series_slug")
+	numberStr := r.URL.Query().Get("number")
+	if seriesSlug == "" || numberStr == "" {
+		http.Error(w, "series_slug e number sao obrigatorios", http.StatusBadRequest)
+		return
+	}
+	number, err := strconv.Atoi(numberStr)
+	if err != nil || number <= 0 {
+		http.Error(w, "number invalido", http.StatusBadRequest)
+		return
+	}
+	ch, err := h.chapterSvc.LookupBySeriesAndNumber(r.Context(), seriesSlug, number)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, "capitulo nao encontrado", http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"id":         ch.ID,
+		"series_id":  ch.SeriesID,
+		"number":     ch.Number,
+		"title":      ch.Title,
+		"state":      ch.State,
+		"access":     ch.Access,
+	})
 }
 
 
