@@ -25,6 +25,9 @@ type Config struct {
 	S3SecretKey     string
 	S3ForcePathStyle bool
 	S3PublicBaseURL string
+	ImgproxyBaseURL string
+	ImgproxyKey     string
+	ImgproxySalt    string
 	ReadTimeout     time.Duration
 	WriteTimeout    time.Duration
 	IdleTimeout     time.Duration
@@ -55,6 +58,9 @@ func Load() (*Config, error) {
 		S3SecretKey:    getenv("S3_SECRET_KEY", ""),
 		S3ForcePathStyle: getenv("S3_FORCE_PATH_STYLE", "true") == "true",
 		S3PublicBaseURL:  getenv("S3_PUBLIC_BASE_URL", ""),
+		ImgproxyBaseURL:  getenv("IMGPROXY_BASE_URL", ""),
+		ImgproxyKey:      getenv("IMGPROXY_KEY", ""),
+		ImgproxySalt:     getenv("IMGPROXY_SALT", ""),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,

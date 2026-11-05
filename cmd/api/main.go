@@ -94,6 +94,13 @@ func main() {
 		mediaHandler := httpapi.NewMediaHandler(mediaSvc, authSvc)
 		mediaHandler.RegisterRoutes(r)
 		slog.Info("rotas de upload registradas")
+
+		pageSvc := services.NewPageService(db)
+		imageSvc := services.NewImageURLBuilder(cfg)
+		accessSvc := services.NewAccessResolver(db)
+		readerHandler := httpapi.NewReaderHandler(pageSvc, imageSvc, authSvc, accessSvc)
+		readerHandler.RegisterRoutes(r)
+		slog.Info("rotas de leitor registradas")
 	} else {
 		slog.Warn("DATABASE_URL nao definida; rotas de auth e catalogo indisponiveis")
 	}

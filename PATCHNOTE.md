@@ -58,10 +58,29 @@
 
 ### Worker de mídia (concluído)
 - `cmd/worker/main.go` — worker com polling em `chapters WHERE state='processing'` (FOR UPDATE SKIP LOCKED para evitar processamento duplicado)
-- Extrai ZIP, ordena páginas por nome, grava cada página no storage com chave `pages/{series_id}/{chapter_number}/{page}_{sha256}.{ext}` (dedup por hash de conteúdo)
+- Extrai ZIP, ordena páginas, grava cada página no storage com chave `pages/{series_id}/{chapter_number}/{page}_{sha256}.{ext}` (dedup por hash de conteúdo)
 - Publica capítulo (`state='published'`) após gravar todas as páginas
 - Modo imgproxy padrão: não gera variantes (imgproxy faz isso em tempo de resposta); modo static preparo para variantes futura
 - Validação E2E contra Postgres ao vivo: ZIP com 3 páginas → worker processa → capítulo `processing` → `published`
+
+### Leitor de capítulos (Fase 1 MVP)
+- `internal/services/image.go` — `ImageURLBuilder` com dois modos:
+  - `static`: URL direta do S3/CDN com chave pré-renderizada (`pages/{series}/{chapter}/{page}.{variant}.{width}w.jpg`)
+  - `imgproxy`: URL assinada HMAC-SHA256 com expiração curta (15 min)
+- `internal/services/page.go` — `PageService`: `List(ctx, chapterID)` lista páginas ordenadas por número
+- `internal/services/access.go` — `AccessResolver`: resolver único `CanRead` (seção 5.2 do roadmap)
+  - Staff/editor vê sem ser VIP
+  - `public`: sempre acessível
+  - `early`: VIP lê imediatamente; demais a partir de `public_at`
+  - `vip_only`: apenas VIPs (ou a partir de `public_at` opcional)
+- `migrations/0003_add_pages_table/{up,down}.sql` — tabela `pages` (chapter_id, number, storage_key, width, height)
+- `internal/adapters/httpapi/reader.go` — handler `GET /chapters/{id}/pages` com validação de CanRead
+- `cmd/api/main.go` — registra rotas de leitor quando `DATABASE_URL` definida
+- `deploy/.env.example` — variáveis IMGPROXY_BASE_URL, IMGPROXY_KEY, IMGPROXY_SALT
+- Validação E2E contra Postgres ao vivo:
+  - Capítulo public: 200 (retorna páginas com URLs)
+  - Capítulo vip_only + não-VIP: 403
+  - Capítulo early com public_at futuro + não-VIP: 403
 
 ### Não incluído (escopo deliberado / YAGNI)
 - `apps/web/` — frontend Next.js 15 existente (App Router, Tailwind, componentes prontos); painel de upload/admin ainda são stubs (página admin diz "Painel em construção")
