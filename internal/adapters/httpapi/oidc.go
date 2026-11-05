@@ -2,52 +2,28 @@ package httpapi
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
-	serviceAuth "github.com/mangashelf/mangashelf/internal/services/auth"
+	"github.com/mangashelf/mangashelf/internal/services"
 	"github.com/mangashelf/mangashelf/internal/services/oidc"
 )
 
 type OIDCHandler struct {
 	oidcSvc   *oidc.AuthService
-	authSvc   *serviceAuth.Service
+	authSvc   *services.AuthService
 }
 
-func NewOIDCHandler(oidcSvc *oidc.AuthService, authSvc *serviceAuth.Service) *OIDCHandler {
+func NewOIDCHandler(oidcSvc *oidc.AuthService, authSvc *services.AuthService) *OIDCHandler {
 	return &OIDCHandler{oidcSvc: oidcSvc, authSvc: authSvc}
 }
 
-func (h *OIDCHandler) RegisterRoutes(mux http.Handler) {
-	// Usar chi diretamente para registrar as rotas OIDC
-	if chiMux, ok := mux.(*chi.Mux); ok {
-		chiMux.Get("/auth/oidc/:provider/login", h.handleOIDC)
-		chiMux.Get("/auth/oidc/:provider/callback", h.handleOIDC)
-	}
+func (h *OIDCHandler) RegisterRoutes(r chi.Router) {
+	r.Get("/auth/oidc/{provider}/login", h.handleOIDCLogin)
+	r.Get("/auth/oidc/{provider}/callback", h.handleOIDCCallback)
 }
 
-func (h *OIDCHandler) handleOIDC(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/auth/oidc/")
-	parts := strings.Split(path, "/")
-	if len(parts) < 2 {
-		http.Error(w, "provedor inválido", http.StatusBadRequest)
-		return
-	}
-
-	providerName := parts[0]
-	action := parts[1]
-
-	switch action {
-	case "login":
-		h.handleOIDCLogin(w, r, providerName)
-	case "callback":
-		h.handleOIDCCallback(w, r, providerName)
-	default:
-		http.Error(w, "ação inválida", http.StatusBadRequest)
-	}
-}
-
-func (h *OIDCHandler) handleOIDCLogin(w http.ResponseWriter, r *http.Request, providerName string) {
+func (h *OIDCHandler) handleOIDCLogin(w http.ResponseWriter, r *http.Request) {
+	providerName := chi.URLParam(r, "provider")
 	provider, ok := oidc.GetProvider(providerName)
 	if !ok {
 		http.Error(w, "provedor não encontrado", http.StatusNotFound)
@@ -70,7 +46,8 @@ func (h *OIDCHandler) handleOIDCLogin(w http.ResponseWriter, r *http.Request, pr
 	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 }
 
-func (h *OIDCHandler) handleOIDCCallback(w http.ResponseWriter, r *http.Request, providerName string) {
+func (h *OIDCHandler) handleOIDCCallback(w http.ResponseWriter, r *http.Request) {
+	providerName := chi.URLParam(r, "provider")
 	provider, ok := oidc.GetProvider(providerName)
 	if !ok {
 		http.Error(w, "provedor não encontrado", http.StatusNotFound)

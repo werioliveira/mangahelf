@@ -46,7 +46,7 @@ func (h *AuthHandler) register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "body invalido", http.StatusBadRequest)
 		return
 	}
-	u, err := h.svc.Register(r.Context(), services.RegisterInput{Email: email, Password: password})
+	u, err := h.svc.Register(r.Context(), email, "", password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -64,7 +64,7 @@ func (h *AuthHandler) login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "body invalido", http.StatusBadRequest)
 		return
 	}
-	u, err := h.svc.Login(r.Context(), email, password)
+	u, err := h.svc.Login(r.Context(), email, password, r.RemoteAddr, r.UserAgent())
 	if err != nil {
 		http.Error(w, "credenciais invalidas", http.StatusUnauthorized)
 		return
