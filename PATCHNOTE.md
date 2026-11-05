@@ -1,5 +1,48 @@
 # Patchnote — MangaShelf
 
+## v0.2.0 — Auth & AuthZ completo (2026-11-05)
+
+### Auth System (`internal/auth/`)
+- **Argon2id hashing**: semáforo de concorrência (`maxConcurrentHash`), parâmetros configuráveis (memória 64MiB, time 3, threads 2), política 12+ chars, bloqueio ~10k senhas comuns, NFKC normalization, hash dummy timing-safe para usuários inexistentes
+- **Sessions (SCS)**: store com hash SHA256 do token (não armazena token bruto), cookie `__Host-ms_session` + `HttpOnly` + `SameSite=Lax` + `Secure`, idle 7d / absolute 30d, revogação imediata via `user_sessions.revoked_at`, limite 10 sessões/usuário (revoga mais antigas), `RenewToken` em login/MFA/passkey/password change
+- **CSRF**: 3 camadas — Fetch Metadata (`Sec-Fetch-Site`), Origin allowlist, token por sessão (`X-CSRF-Token`); admin exige `X-MS-Admin: 1` + same-origin estrito
+- **Rate limiting**: in-memory token bucket com janela deslizante, HMAC-SHA256 email hash, chaves compostas (ip, email, ip+email), backoff progressivo (2^n), fail-closed em login/MFA/reset, fail-open em leituras públicas
+- **One-time tokens**: `verify_email` (24h), `reset_password` (30min), `change_email` (1h), consumo atômico via `UPDATE ... RETURNING`, fragmento URL no email (`#token=...`)
+- **MFA TOTP**: segredos criptografados AES-256-GCM com rotação de chaves (`AUTH_ENCRYPTION_KEYS`), replay protection via `last_used_step`, 10 recovery codes (HMAC-SHA256, single-use)
+- **WebAuthn/Passkeys**: discoverable credentials, sign count verification, clone detection, RPID/Origins configuráveis, challenge server-side
+- **Auth flows**: register (idempotent, 202 check_email), login (MFA challenge → sessão pendente → sessão completa), logout (revoga sessão atual), forgot/reset/change password, change email (token no novo + aviso no antigo), verify email, reauth step-up (10min pwd/email/mfa, 30min role/instance/ban, 5min owner transfer)
+- **Audit**: append-only `audit_log` com trigger imutável, structured logging (actor, action, target_type, target_id, before/after, ip, ua, request_id)
+
+### AuthZ System (`internal/authz/`)
+- **Permission catalog**: 32 permissions tipadas (`authz.Perm`), scopes global/group, `requires_mfa` flag
+- **Resolver deny-by-default**: 1) usuário inativo/banned → deny, 2) permissão requires_mfa sem MFA verificado → deny, 3) coleta grants (global role, group role, overrides), 4) qualquer deny override → deny, 5) allow override → allow, 6) group role → allow, 7) global role → allow, 8) default deny
+- **Anti-escalação**: position-based (maior = mais autoridade), ator deve ter `role.assign` + position > role + position > target + possuir todas permissões do role, proteção último owner (system role não deletável), self-assignment bloqueado
+- **Policy router**: `Public()`, `Authenticated()`, `Require(perm, scopeFn)` — teste CI `TestEveryRouteHasPolicy` falha se rota sem policy, semgrep rules bloqueiam `user.Role == X`, string literal permissions, `r.Get/Post` direto
+
+### Database (Migration 0009)
+- Tabelas: `users`, `external_identities`, `sessions` (SCS store), `user_sessions` (metadados/revocation), `auth_tokens`, `user_totp`, `user_recovery_codes`, `user_webauthn_credentials`, `permissions`, `roles`, `role_permissions`, `user_roles`, `group_members`, `user_overrides` (com `scope_group_id`), `bans`, `audit_log` (append-only + trigger)
+- Seed: roles admin/editor/moderator/user (position 1-4), 32 permissions, role_permissions mapeamento, admin default user
+
+### Dependencies
+- `github.com/alexedwards/scs/v2`, `github.com/alexedwards/scs/pgxstore`
+- `github.com/jackc/pgx/v5`, `github.com/jackc/pgx/v5/pgxpool`, `github.com/jackc/pgconn`
+- `github.com/go-webauthn/webauthn`
+- `github.com/pquerna/otp`, `github.com/pquerna/otp/totp`
+- `golang.org/x/time/rate`, `golang.org/x/text/unicode/norm`
+
+### Cleanup
+- Removidos: `internal/services/auth.go`, `internal/services/auth/service.go`, `internal/services/auth_test.go`, `internal/services/oidc/auth.go`, `internal/adapters/httpapi/middleware/auth.go` (gorilla/sessions stubs)
+- Novo entry point: `internal/services/auth_service.go` integra todo o sistema auth
+
+### Config
+- Novas variáveis: `SESSION_SECRET`, `RPID`, `RP_ORIGINS`, `ENCRYPTION_KEYS`, `AUTH_HIBP_CHECK`, `TRUSTED_PROXIES`, `CLIENT_IP_HEADER`, `MFA_WINDOW`, `STEP_UP_WINDOWS`
+
+### Validation
+- `go build ./...` ✓
+- `go test ./...` ✓
+
+---
+
 ## v0.1.0 — Fundação e autenticação (2026-11-04)
 
 ### Estrutura do repositório (monorepo)
