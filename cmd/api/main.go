@@ -106,6 +106,11 @@ func main() {
 		vipHandler := httpapi.NewVipHandler(vipSvc, authSvc)
 		vipHandler.RegisterRoutes(r)
 		slog.Info("rotas de vip registradas")
+
+		adminSvc := services.NewAdminService(db)
+		adminHandler := httpapi.NewAdminHandler(adminSvc, authSvc)
+		adminHandler.RegisterRoutes(r)
+		slog.Info("rotas de admin registradas")
 	} else {
 		slog.Warn("DATABASE_URL nao definida; rotas de auth e catalogo indisponiveis")
 	}

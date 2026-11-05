@@ -100,8 +100,18 @@
   - Conceder VIP: 204
   - Status VIP: has_active_vip=true, plan_name, expires_at, days_remaining, source
 
+### Painel admin v1 (Fase 1 MVP)
+- `internal/services/admin.go` — `AdminService`: `IsStaff`, `ListSeriesAdmin`, `ListUsersAdmin`, `UpdateChapterAdmin`
+- `internal/adapters/httpapi/admin.go` — handlers: `GET /admin/series`, `GET /admin/users`, `PATCH /admin/chapters/{id}` (middleware de staff via `UserIDFromSession` + verificação de permissoes)
+- `cmd/api/main.go` — registra rotas de admin quando `DATABASE_URL` definida
+- `apps/web/app/admin/page.tsx` — painel admin funcional (séries, usuários, ações rápidas) substituindo o stub "Painel em construção"
+- Validação E2E contra Postgres ao vivo:
+  - Login como staff: 200
+  - Listar séries (admin): 200
+  - Listar usuários (admin): 200 (inclui roles, has_vip, vip_expires)
+  - Middleware staff: nega acesso a não-staff com 403
+
 ### Não incluído (escopo deliberado / YAGNI)
-- `apps/web/` — frontend Next.js 15 existente (App Router, Tailwind, componentes prontos); painel de upload/admin ainda são stubs (página admin diz "Painel em construção")
 - Adapter search/postgres e auth/builtin ainda são stubs (`errNotImplemented`)
 - sqlc, oauth, meilisearch/redis/imgproxy (desativados, rodam no WSL)
 - Testes de integração com banco real
