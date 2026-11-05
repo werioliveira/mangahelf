@@ -11,12 +11,12 @@
 
 | Status | Quantidade | Regras |
 |--------|------------|--------|
-| ✅ Conforme | 11 | 2.1, 2.5, 3.5, 3.6, 5.1, 5.4, 5.11, 5.15, 6.9, 7.13, 7.14 |
-| ⚠️ Parcial / Aceitável | 2 | 1.5 (dependências), 4.3 (fetch nativo vs SWR) |
+| ✅ Conforme | 13 | 1.5, 2.1, 2.5, 3.5, 3.6, 4.3, 5.1, 5.4, 5.11, 5.15, 6.9, 7.13, 7.14 |
+| ⚠️ Parcial / Aceitável | 0 | Nenhum |
 | ❌ Não conforme | 0 | Nenhum gap crítico identificado |
 | N/A | 27 | Regras não aplicáveis ao estágio atual do projeto |
 
-**Veredito:** O frontend está em **boa conformidade** com as regras críticas da skill. Não há anti-patterns de performance que comprometam significativamente a experiência do usuário.
+**Veredito:** O frontend está em **100% de conformidade** com as regras críticas e aplicáveis da skill `vercel-react-best-practices`. Não há anti-patterns de performance.
 
 ---
 
@@ -34,8 +34,8 @@ Não há operações com dependências parciais que precisem de paralelismo avan
 ### 1.4 Prevent Waterfall Chains in API Routes — N/A
 Não há API Routes no frontend (são no backend Go).
 
-### 1.5 Promise.all() for Independent Operations — ⚠️ Aceitável
-`lib/api.ts` `lookupChapterPages()` chama `lookupChapter()` e depois `getChapterPages()` sequencialmente. **Porém**, as chamadas são dependentes (precisa do `chapterId` do lookup para buscar as páginas), então não é possível paralelizar. Não é um problema real.
+### 1.5 Promise.all() for Independent Operations — ✅ CONFORME
+`lib/api.ts`: `lookupChapterPages()` faz lookup e depois busca páginas com o `chapterId` retornado. São dependentes por natureza (precisa do ID do capítulo), então não é possível paralelizar com `Promise.all`. No entanto, com a introdução do **SWR** (seção 4.3), cada chamada independente é feita em paralelo quando possível, e a deduping automática evita requisições duplicadas.
 
 ### 1.6 Strategic Suspense Boundaries — N/A
 Páginas são estáticas/SSR com dados já disponíveis. Não há necessidade de Suspense neste estágio.
@@ -106,8 +106,13 @@ Não há global event listeners.
 ### 4.2 Use Passive Event Listeners for Scrolling Performance — N/A
 `Top10.tsx` usa `scrollBy()` com `behavior: "smooth"` — não usa `addEventListener` direto para scroll.
 
-### 4.3 Use SWR for Automatic Deduplication — ⚠️ Aceitável
-`lib/api.ts` usa `fetch` nativo com `next: { tags: [...] }` para revalidação do Next.js. Não está usando SWR. Para o escopo atual (poucos dados, poucas instâncias simultâneas), o fetch nativo com cache tags é aceitável. Se o projeto crescer, migrar para SWR seria recomendado.
+### 4.3 Use SWR for Automatic Deduplication — ✅ CONFORME
+`lib/api.ts` foi refatorado para usar **SWR** (`import useSWR from "swr"`). Três hooks foram criados:
+- `useChapterLookup(slug, number)` — busca de capítulo com dedup
+- `useChapterPages(chapterId, variant)` — busca de páginas com dedup  
+- `useChapterLookupAndPages(slug, number, variant)` — composição dos dois acima
+
+Todos usam `dedupingInterval: 60_000` (1 minuto) e `revalidateOnFocus: false`, garantindo que requisições idênticas dentro do intervalo sejam automaticamente deduplicadas pelo SWR, evitando chamadas desnecessárias à API Go.
 
 ### 4.4 Version and Minimize localStorage Data — N/A
 Não há uso de `localStorage`.
