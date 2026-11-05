@@ -13,7 +13,7 @@ export default function AdminLayout({
 }) {
   return (
     <div className="flex h-screen bg-slate-50 text-slate-900">
-      {/* Sidebar */}
+      {/* Sidebar esquerda */}
       <aside className="hidden lg:flex flex-col w-64 bg-slate-900 text-slate-200 shrink-0">
         <div className="h-16 flex items-center px-6 border-b border-slate-800">
           <span className="text-xl font-black tracking-tighter text-white">MangaShelf</span>
@@ -69,7 +69,7 @@ export default function AdminLayout({
 
       {/* Conteúdo principal */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
+        {/* Header superior */}
         <header className="h-16 border-b border-slate-200 bg-white/90 backdrop-blur flex items-center justify-between px-6 shrink-0 z-10">
           <div className="flex items-center gap-4">
             <button className="lg:hidden p-2 rounded-md text-slate-600 hover:bg-slate-100">

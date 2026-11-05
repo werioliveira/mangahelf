@@ -104,8 +104,9 @@
 - `internal/services/admin.go` — `AdminService`: `IsStaff`, `ListSeriesAdmin`, `ListUsersAdmin`, `UpdateChapterAdmin`
 - `internal/adapters/httpapi/admin.go` — handlers: `GET /admin/series`, `GET /admin/users`, `PATCH /admin/chapters/{id}` (middleware de staff via `UserIDFromSession` + verificação de permissoes)
 - `cmd/api/main.go` — registra rotas de admin quando `DATABASE_URL` definida
-- `apps/web/app/admin/layout.tsx` — layout admin SEPARADO do website (sidebar esquerda + header superior + área principal, cores slate/blue)
-- `apps/web/app/admin/page.tsx` — dashboard com cards de estatísticas (séries, usuários, VIP, capítulos), tabelas de séries e usuários recentes, ações rápidas; conectado às APIs `/admin/series` e `/admin/users`
+- `apps/web/app/(admin)/layout.tsx` — layout admin SEPARADO do website via Route Group (sidebar esquerda + header superior + área principal, cores slate/blue; sem navbar/footer do site público)
+- `apps/web/app/(admin)/admin/page.tsx` — dashboard com cards de estatísticas (séries, usuários, VIP, capítulos), tabelas recentes, ações rápidas; conectado às APIs `/admin/series` e `/admin/users`
+- URL mantida como `/admin` (Route Groups não afetam URLs)
 - Validação E2E contra Postgres ao vivo:
   - Login como staff: 200
   - Listar séries (admin): 200

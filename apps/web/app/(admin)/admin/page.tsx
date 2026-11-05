@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Users, Shield, TrendingUp, Clock } from "lucide-react";
+import { BookOpen, Users, Shield, TrendingUp } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -7,6 +7,7 @@ type Series = {
   id: string;
   title: string;
   slug: string;
+  synopsis: string;
   access: string;
   chapter_count: number;
   created_at: string;
@@ -58,7 +59,13 @@ function StatCard({
   );
 }
 
-function Badge({ children, variant = "gray" }: { children: React.ReactNode; variant?: string }) {
+function Badge({
+  children,
+  variant = "gray",
+}: {
+  children: React.ReactNode;
+  variant?: string;
+}) {
   const variants: Record<string, string> = {
     gray: "bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded",
     green: "bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded",
@@ -85,13 +92,11 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header da página */}
       <div>
         <h2 className="text-2xl font-black text-slate-900">Visão geral</h2>
         <p className="text-slate-500">Métricas e atividades recentes da plataforma.</p>
       </div>
 
-      {/* Cards de estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Séries" value={totalSeries} Icon={BookOpen} color="blue" />
         <StatCard title="Usuários" value={totalUsers} Icon={Users} color="green" />
@@ -100,7 +105,6 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Tabela de séries recentes */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-black text-slate-900">Séries recentes</h3>
@@ -143,7 +147,6 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Tabela de usuários recentes */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-black text-slate-900">Usuários recentes</h3>
@@ -189,7 +192,6 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Ações rápidas */}
       <div className="bg-white rounded-xl border border-slate-200 p-6">
         <h3 className="text-sm font-black text-slate-900 mb-4">Ações rápidas</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
