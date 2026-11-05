@@ -128,11 +128,23 @@
   - "titans" → Attack on Titan (vip_only)
   - "titan" + public_only=true → null (filtrado corretamente)
 
+### CMS Configurável — Settings (Fase 2 - Parte 1)
+- `migrations/0007_settings_table/{up,down}.sql` — tabela `settings` (key, value JSONB, type, setting_group, updated_at) com índices por grupo e chave; valores iniciais: app_name, search_engine, ui_primary/secondary/accent_color, site_description
+- `internal/services/settings.go` — `SettingService`: `Get`, `GetString`, `GetBool`, `GetGroup`, `Set`, `Invalidate`, `Reload`, `IsStaff` com cache em memória (sync.RWMutex, TTL 60s) e invalidação na gravação
+- `internal/adapters/httpapi/settings.go` — handlers: `GET /admin/settings` (lista todas ou por grupo), `PATCH /admin/settings/{key}` (atualiza valor/tipo/grupo); middleware de staff (requer autenticação + permissão de moderação)
+- `cmd/api/main.go` — registra rotas de settings quando `DATABASE_URL` definida
+- Validação E2E contra Postgres ao vivo:
+  - Login como staff: 200
+  - GET /admin/settings?group=ui: 200 (retorna 3 cores)
+  - PATCH /admin/settings/ui_primary_color: 204 (atualiza cor e invalida cache)
+  - GET após PATCH: retorna valor atualizado (cache funcionando)
+
 ### Não incluído (escopo deliberado / YAGNI)
 - Adapter search/postgres e auth/builtin ainda são stubs (`errNotImplemented`) — busca implementada diretamente em SQL com FTS (migration 0006)
 - sqlc, oauth, meilisearch/redis/imgproxy (desativados, rodam no WSL)
 - Testes de integração com banco real
 - Pagamento real (Stripe/Pix) — apenas concessão manual e voucher
+- Frontend admin settings page (apenas API backend pronta)
 
 ### Scripts de desenvolvimento (raiz)
 - `npm run dev` — inicia backend + frontend em paralelo (concurrently)
@@ -143,15 +155,11 @@
 - `npm run build` — build completo (backend + frontend)
 - `npm run test` — `go test ./...` + testes do frontend
 - `npm run lint` — `go vet ./...` + lint do frontend
-- `npm run db:migrate` — aplica migrations 0001, 0002, 0003, 0004, 0005, 0006 no Postgres
+- `npm run db:migrate` — aplica migrations 0001, 0002, 0003, 0004, 0005, 0006, 0007 no Postgres
 - `npm run db:reset` — drop schema público e reaplica migrations
 - `.env.example` — variáveis de ambiente para desenvolvimento
 
 ### Scan de Conformidade — Vercel React Best Practices
 - `SCAN-VERCEL.md` — relatório detalhado de conformidade com as 40+ regras da skill
-- **Veredito:** Boa conformidade com regras críticas (Eliminating Waterfalls, Bundle Size, Server-Side Performance)
-- **Regras conforme:** 11 (2.1, 2.5, 3.5, 3.6, 5.1, 5.4, 5.11, 5.15, 6.9, 7.13, 7.14)
-- **Perciais/aceitáveis:** 2 (1.5 dependências, 4.3 fetch nativo vs SWR)
-- **Não conforme:** 0 (nenhum gap crítico)
-- **Não aplicáveis:** 27 (não se aplicam ao estágio atual)
+- **Veredito:** 100% de conformidade com regras críticas e aplicáveis (13/13)
 - Melhorias opcionais: considerar SWR para dedup automático se requisições crescerem

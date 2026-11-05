@@ -116,6 +116,11 @@ func main() {
 		searchHandler := httpapi.NewSearchHandler(searchSvc)
 		searchHandler.RegisterRoutes(r)
 		slog.Info("rotas de busca registradas")
+
+		settingsSvc := services.NewSettingService(db)
+		settingsHandler := httpapi.NewSettingsHandler(settingsSvc, authSvc)
+		settingsHandler.RegisterRoutes(r)
+		slog.Info("rotas de configuracoes registradas")
 	} else {
 		slog.Warn("DATABASE_URL nao definida; rotas de auth e catalogo indisponiveis")
 	}
