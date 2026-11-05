@@ -114,13 +114,14 @@
   - Middleware staff: nega acesso a não-staff com 403
   - `next build`: passa (11 rotas, dashboard server-rendered)
 
-### Busca full-text (Fase 1 MVP)
+### Busca full-text (FTS) com suporte a Meilisearch
 - `migrations/0006_search_fts_series/{up,down}.sql` — adiciona coluna `search_vector` (tsvector gerado) + índice GIN nas séries para busca por título e sinopse com ranking por relevância (ts_rank)
-- `internal/services/search.go` — `SearchService`: `Search(input)` executa busca FTS com `to_tsquery` + `ts_rank`, suporte a paginação (limit/offset) e filtro por acesso (public_only)
+- `internal/services/search.go` — `SearchService` com porta `SearchEngine`: `Search(input)`, `IndexDocument(id, title, body)`, `DeleteDocument(id)`
+- `internal/adapters/search/postgres/postgres.go` — `Postgres` engine: `to_tsquery` + `ts_rank` com ranking por relevância
+- `internal/adapters/search/meilisearch/meilisearch.go` — `Meilisearch` engine: cliente oficial meilisearch-go com `AddDocuments`, `DeleteDocument`, `Search`
 - `internal/adapters/httpapi/search.go` — handler `GET /search?q=...&limit=...&offset=...&public_only=...`
-- `cmd/api/main.go` — registra rotas de busca quando `DATABASE_URL` definida
-- `apps/web/lib/api.ts` — `searchSeries()` (Server Component) + `useSearchSeries()` (SWR hook com dedup)
-- `apps/web/app/search/metadata.ts` + `apps/web/app/search/page.tsx` — página de busca com input, filtro público/VIP, cards de resultados, estados de loading/empty
+- `cmd/api/main.go` — lê `search_engine` do settings e escolhe engine (postgres padrão ou meilisearch), com fallback para postgres se meilisearch falhar
+- `deploy/.env.example` — variáveis `MEILISEARCH_URL`, `MEILISEARCH_API_KEY`
 - Validação E2E contra Postgres ao vivo:
   - "one piece" → One Piece (rank 0.607)
   - "ninja" → Naruto (rank 0.243)
@@ -150,8 +151,8 @@
 - Validação: `next build` passa (13 rotas), `go build/vet/test` passa
 
 ### Não incluído (escopo deliberado / YAGNI)
-- Adapter search/postgres e auth/builtin ainda são stubs (`errNotImplemented`) — busca implementada diretamente em SQL com FTS (migration 0006)
-- sqlc, oauth, meilisearch/redis/imgproxy (desativados, rodam no WSL)
+- Adapter auth/builtin ainda é stub (`errNotImplemented`)
+- sqlc, oauth, redis/imgproxy (desativados, rodam no WSL)
 - Testes de integração com banco real
 - Pagamento real (Stripe/Pix) — apenas concessão manual e voucher
 

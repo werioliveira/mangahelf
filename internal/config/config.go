@@ -28,6 +28,8 @@ type Config struct {
 	ImgproxyBaseURL string
 	ImgproxyKey     string
 	ImgproxySalt    string
+	MeilisearchURL  string
+	MeilisearchAPIKey string
 	ReadTimeout     time.Duration
 	WriteTimeout    time.Duration
 	IdleTimeout     time.Duration
@@ -61,6 +63,8 @@ func Load() (*Config, error) {
 		ImgproxyBaseURL:  getenv("IMGPROXY_BASE_URL", ""),
 		ImgproxyKey:      getenv("IMGPROXY_KEY", ""),
 		ImgproxySalt:     getenv("IMGPROXY_SALT", ""),
+		MeilisearchURL:   getenv("MEILISEARCH_URL", ""),
+		MeilisearchAPIKey:getenv("MEILISEARCH_API_KEY", ""),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,

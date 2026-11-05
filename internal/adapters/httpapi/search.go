@@ -55,8 +55,9 @@ func (h *SearchHandler) search(w http.ResponseWriter, r *http.Request) {
 		"query":  q,
 		"limit":  limit,
 		"offset": offset,
-		"total":  len(results),
-		"results": results,
+		"total":  results.Total,
+		"results": results.IDs,
+		"scores": results.Scores,
 	})
 }
 

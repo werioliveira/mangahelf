@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"log/slog"
 	"net/http"
 	"os"
@@ -14,6 +15,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	_ "github.com/lib/pq"
 	"github.com/mangashelf/mangashelf/internal/adapters/httpapi"
+	"github.com/mangashelf/mangashelf/internal/adapters/search/meilisearch"
+	"github.com/mangashelf/mangashelf/internal/adapters/search/postgres"
 	"github.com/mangashelf/mangashelf/internal/adapters/storage/local"
 	"github.com/mangashelf/mangashelf/internal/adapters/storage/s3"
 	"github.com/mangashelf/mangashelf/internal/config"
@@ -112,15 +115,35 @@ func main() {
 		adminHandler.RegisterRoutes(r)
 		slog.Info("rotas de admin registradas")
 
-		searchSvc := services.NewSearchService(db)
-		searchHandler := httpapi.NewSearchHandler(searchSvc)
-		searchHandler.RegisterRoutes(r)
-		slog.Info("rotas de busca registradas")
-
 		settingsSvc := services.NewSettingService(db)
 		settingsHandler := httpapi.NewSettingsHandler(settingsSvc, authSvc)
 		settingsHandler.RegisterRoutes(r)
 		slog.Info("rotas de configuracoes registradas")
+
+		// Busca: escolher engine baseado na config
+		var searchEngine ports.SearchEngine = postgres.New(db)
+		if searchEngineSetting, _, err := settingsSvc.Get(context.Background(), "search_engine"); err == nil {
+			var engine string
+			if err := json.Unmarshal(searchEngineSetting.Value, &engine); err == nil && engine == "meilisearch" {
+				meiliCfg := meilisearch.Config{
+					Host:   cfg.MeilisearchURL,
+					APIKey: cfg.MeilisearchAPIKey,
+					Index:  "mangashelf",
+				}
+				meili, err := meilisearch.New(meiliCfg)
+				if err != nil {
+					slog.Warn("falha ao inicializar meilisearch, caindo para postgres", "err", err)
+				} else {
+					searchEngine = meili
+					slog.Info("busca meilisearch inicializada", "host", cfg.MeilisearchURL)
+				}
+			}
+		}
+
+		searchSvc := services.NewSearchService(db, searchEngine)
+		searchHandler := httpapi.NewSearchHandler(searchSvc)
+		searchHandler.RegisterRoutes(r)
+		slog.Info("rotas de busca registradas")
 	} else {
 		slog.Warn("DATABASE_URL nao definida; rotas de auth e catalogo indisponiveis")
 	}
