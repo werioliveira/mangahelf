@@ -143,6 +143,12 @@
   - GET após PATCH: retorna valor atualizado (cache funcionando)
   - Frontend next build: passa (13 rotas, incluindo /admin/settings)
 
+### Tema dinâmico (Fase 2 - Parte 3)
+- `apps/web/lib/api.ts` — `ThemeSettings` type, `useThemeSettings()` SWR hook que busca cores do grupo `ui` do settings (ui_primary_color, ui_secondary_color, ui_accent_color)
+- `apps/web/app/client-layout.tsx` — injetar cores do CMS como CSS variables no `<html>` (`--theme-primary`, `--theme-secondary`, `--theme-accent`) via `useThemeSettings()`
+- O layout do site público usa essas variáveis CSS para aplicar cores dinâmicas do banco de dados
+- Validação: `next build` passa (13 rotas), `go build/vet/test` passa
+
 ### Não incluído (escopo deliberado / YAGNI)
 - Adapter search/postgres e auth/builtin ainda são stubs (`errNotImplemented`) — busca implementada diretamente em SQL com FTS (migration 0006)
 - sqlc, oauth, meilisearch/redis/imgproxy (desativados, rodam no WSL)

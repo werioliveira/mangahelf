@@ -50,6 +50,12 @@ export type Setting = {
   updated_at: string;
 };
 
+export type ThemeSettings = {
+  primary: string;
+  secondary: string;
+  accent: string;
+};
+
 export type SettingsResponse = {
   settings: Setting[];
   total: number;
@@ -119,6 +125,25 @@ export function useSettings(group?: string) {
       const res = await fetch(`${API_URL}${url}`, { cache: "no-store" });
       if (!res.ok) return { settings: [], total: 0 };
       return res.json();
+    },
+    { revalidateOnFocus: false, dedupingInterval: 60_000 },
+  );
+}
+
+export function useThemeSettings() {
+  return useSWR<ThemeSettings | null>(
+    "/admin/settings?group=ui",
+    async (url: string) => {
+      const res = await fetch(`${API_URL}${url}`, { cache: "no-store" });
+      if (!res.ok) return null;
+      const data = await res.json();
+      const settings = data.settings ?? [];
+      const get = (key: string) => settings.find((s: Setting) => s.key === key)?.value;
+      return {
+        primary: get("ui_primary_color") ?? "#3b82f6",
+        secondary: get("ui_secondary_color") ?? "#1e293b",
+        accent: get("ui_accent_color") ?? "#f59e0b",
+      };
     },
     { revalidateOnFocus: false, dedupingInterval: 60_000 },
   );
