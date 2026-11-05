@@ -104,12 +104,14 @@
 - `internal/services/admin.go` — `AdminService`: `IsStaff`, `ListSeriesAdmin`, `ListUsersAdmin`, `UpdateChapterAdmin`
 - `internal/adapters/httpapi/admin.go` — handlers: `GET /admin/series`, `GET /admin/users`, `PATCH /admin/chapters/{id}` (middleware de staff via `UserIDFromSession` + verificação de permissoes)
 - `cmd/api/main.go` — registra rotas de admin quando `DATABASE_URL` definida
-- `apps/web/app/admin/page.tsx` — painel admin funcional (séries, usuários, ações rápidas) substituindo o stub "Painel em construção"
+- `apps/web/app/admin/layout.tsx` — layout admin SEPARADO do website (sidebar esquerda + header superior + área principal, cores slate/blue)
+- `apps/web/app/admin/page.tsx` — dashboard com cards de estatísticas (séries, usuários, VIP, capítulos), tabelas de séries e usuários recentes, ações rápidas; conectado às APIs `/admin/series` e `/admin/users`
 - Validação E2E contra Postgres ao vivo:
   - Login como staff: 200
   - Listar séries (admin): 200
   - Listar usuários (admin): 200 (inclui roles, has_vip, vip_expires)
   - Middleware staff: nega acesso a não-staff com 403
+  - `next build`: passa (11 rotas, dashboard server-rendered)
 
 ### Não incluído (escopo deliberado / YAGNI)
 - Adapter search/postgres e auth/builtin ainda são stubs (`errNotImplemented`)
@@ -126,6 +128,6 @@
 - `npm run build` — build completo (backend + frontend)
 - `npm run test` — `go test ./...` + testes do frontend
 - `npm run lint` — `go vet ./...` + lint do frontend
-- `npm run db:migrate` — aplica migrations 0001, 0002, 0003 no Postgres
+- `npm run db:migrate` — aplica migrations 0001, 0002, 0003, 0004, 0005 no Postgres
 - `npm run db:reset` — drop schema público e reaplica migrations
 - `.env.example` — variáveis de ambiente para desenvolvimento
