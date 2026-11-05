@@ -114,8 +114,22 @@
   - Middleware staff: nega acesso a não-staff com 403
   - `next build`: passa (11 rotas, dashboard server-rendered)
 
+### Busca full-text (Fase 1 MVP)
+- `migrations/0006_search_fts_series/{up,down}.sql` — adiciona coluna `search_vector` (tsvector gerado) + índice GIN nas séries para busca por título e sinopse com ranking por relevância (ts_rank)
+- `internal/services/search.go` — `SearchService`: `Search(input)` executa busca FTS com `to_tsquery` + `ts_rank`, suporte a paginação (limit/offset) e filtro por acesso (public_only)
+- `internal/adapters/httpapi/search.go` — handler `GET /search?q=...&limit=...&offset=...&public_only=...`
+- `cmd/api/main.go` — registra rotas de busca quando `DATABASE_URL` definida
+- `apps/web/lib/api.ts` — `searchSeries()` (Server Component) + `useSearchSeries()` (SWR hook com dedup)
+- `apps/web/app/search/metadata.ts` + `apps/web/app/search/page.tsx` — página de busca com input, filtro público/VIP, cards de resultados, estados de loading/empty
+- Validação E2E contra Postgres ao vivo:
+  - "one piece" → One Piece (rank 0.607)
+  - "ninja" → Naruto (rank 0.243)
+  - "magia" → Harry Potter (rank 0.243)
+  - "titans" → Attack on Titan (vip_only)
+  - "titan" + public_only=true → null (filtrado corretamente)
+
 ### Não incluído (escopo deliberado / YAGNI)
-- Adapter search/postgres e auth/builtin ainda são stubs (`errNotImplemented`)
+- Adapter search/postgres e auth/builtin ainda são stubs (`errNotImplemented`) — busca implementada diretamente em SQL com FTS (migration 0006)
 - sqlc, oauth, meilisearch/redis/imgproxy (desativados, rodam no WSL)
 - Testes de integração com banco real
 - Pagamento real (Stripe/Pix) — apenas concessão manual e voucher
@@ -129,7 +143,7 @@
 - `npm run build` — build completo (backend + frontend)
 - `npm run test` — `go test ./...` + testes do frontend
 - `npm run lint` — `go vet ./...` + lint do frontend
-- `npm run db:migrate` — aplica migrations 0001, 0002, 0003, 0004, 0005 no Postgres
+- `npm run db:migrate` — aplica migrations 0001, 0002, 0003, 0004, 0005, 0006 no Postgres
 - `npm run db:reset` — drop schema público e reaplica migrations
 - `.env.example` — variáveis de ambiente para desenvolvimento
 

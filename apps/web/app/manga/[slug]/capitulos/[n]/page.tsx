@@ -61,7 +61,7 @@ export default async function ChapterPage({ params }: Props) {
       </div>
 
       <div className="space-y-4">
-        {pages.map((p) => (
+        {pages.map((p: { number: number; url: string; width: number; height: number; storage_key?: string }) => (
           <div key={p.number} className="relative w-full aspect-[2/3] rounded-xl overflow-hidden ring-1 ring-white/5 bg-card">
             <Image src={p.url} alt={`Página ${p.number}`} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" />
             <span className="absolute bottom-2 right-2 px-2 py-0.5 text-[10px] font-bold text-white bg-black/60 backdrop-blur-sm rounded-md">

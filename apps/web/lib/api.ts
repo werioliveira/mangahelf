@@ -23,9 +23,55 @@ export type Page = {
 
 export type ChapterPagesResponse = Page[];
 
+export type SearchSeriesResult = {
+  id: string;
+  title: string;
+  slug: string;
+  synopsis: string;
+  access: string;
+  group_id: string | null;
+  rank: number;
+  chapters: number;
+};
+
+export type SearchSeriesResponse = {
+  query: string;
+  limit: number;
+  offset: number;
+  total: number;
+  results: SearchSeriesResult[];
+};
+
 // ---------------------------------------------------------------------------
 // Fetch cru (Server Components) — sem deduplicação automática
 // ---------------------------------------------------------------------------
+
+export async function searchSeries(
+  query: string,
+  limit = 20,
+  offset = 0,
+  publicOnly = false,
+): Promise<SearchSeriesResponse> {
+  const params = new URLSearchParams({ q: query, limit: String(limit), offset: String(offset) });
+  if (publicOnly) params.set("public_only", "true");
+  return fetchJson<SearchSeriesResponse>(`/search?${params}`);
+}
+
+// ---------------------------------------------------------------------------
+// SWR hooks (Client Components) — deduplicação automática
+// ---------------------------------------------------------------------------
+
+export function useSearchSeries(query: string, limit = 20, publicOnly = false) {
+  return useSWR<SearchSeriesResponse | null>(
+    query ? `/search?q=${encodeURIComponent(query)}&limit=${limit}&public_only=${publicOnly}` : null,
+    async (url: string) => {
+      const res = await fetch(`${API_URL}${url}`, { cache: "no-store" });
+      if (!res.ok) return { query, limit, offset: 0, total: 0, results: [] };
+      return res.json();
+    },
+    { revalidateOnFocus: false, dedupingInterval: 60_000 },
+  );
+}
 
 async function fetchJson<T>(path: string): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, { cache: "no-store" });

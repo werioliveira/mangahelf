@@ -18,6 +18,11 @@
 
 **Veredito:** O frontend está em **100% de conformidade** com as regras críticas e aplicáveis da skill `vercel-react-best-practices`. Não há anti-patterns de performance.
 
+**Páginas verificadas:** `/`, `/library`, `/vip`, `/profile`, `/ranking`, `/favorites`, `/manga/[slug]`, `/manga/[slug]/capitulos/[n]`, `/search`, `/admin/*` — todas usam SWR para deduplicação, têm metadata adequada, e seguem as regras de rendering e JavaScript performance.
+
+**Novas páginas adicionadas nesta sessão:**
+- `/search` — busca full-text com SWR hook (`useSearchSeries`), loading/empty states, filtros de acesso
+
 ---
 
 ## 1. Eliminating Waterfalls (CRITICAL)
