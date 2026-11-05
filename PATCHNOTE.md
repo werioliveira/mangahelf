@@ -128,23 +128,26 @@
   - "titans" → Attack on Titan (vip_only)
   - "titan" + public_only=true → null (filtrado corretamente)
 
-### CMS Configurável — Settings (Fase 2 - Parte 1)
+### CMS Configurável — Settings (Fase 2 - Partes 1 e 2)
 - `migrations/0007_settings_table/{up,down}.sql` — tabela `settings` (key, value JSONB, type, setting_group, updated_at) com índices por grupo e chave; valores iniciais: app_name, search_engine, ui_primary/secondary/accent_color, site_description
 - `internal/services/settings.go` — `SettingService`: `Get`, `GetString`, `GetBool`, `GetGroup`, `Set`, `Invalidate`, `Reload`, `IsStaff` com cache em memória (sync.RWMutex, TTL 60s) e invalidação na gravação
 - `internal/adapters/httpapi/settings.go` — handlers: `GET /admin/settings` (lista todas ou por grupo), `PATCH /admin/settings/{key}` (atualiza valor/tipo/grupo); middleware de staff (requer autenticação + permissão de moderação)
 - `cmd/api/main.go` — registra rotas de settings quando `DATABASE_URL` definida
+- `apps/web/lib/api.ts` — `Setting` e `SettingsResponse` types, `fetchSettings()` (Server Component), `useSettings()` (SWR hook com dedup), `updateSetting()` (PATCH)
+- `apps/web/app/(admin)/settings/page.tsx` — página de admin settings com abas por grupo (site/search/ui/internal), tabela de configurações, edição inline de valores (string, boolean, color, json), botão salvar/cancelar, estados de loading/empty
+- `apps/web/app/(admin)/layout.tsx` — link de Configurações adicionado na sidebar
 - Validação E2E contra Postgres ao vivo:
   - Login como staff: 200
   - GET /admin/settings?group=ui: 200 (retorna 3 cores)
   - PATCH /admin/settings/ui_primary_color: 204 (atualiza cor e invalida cache)
   - GET após PATCH: retorna valor atualizado (cache funcionando)
+  - Frontend next build: passa (13 rotas, incluindo /admin/settings)
 
 ### Não incluído (escopo deliberado / YAGNI)
 - Adapter search/postgres e auth/builtin ainda são stubs (`errNotImplemented`) — busca implementada diretamente em SQL com FTS (migration 0006)
 - sqlc, oauth, meilisearch/redis/imgproxy (desativados, rodam no WSL)
 - Testes de integração com banco real
 - Pagamento real (Stripe/Pix) — apenas concessão manual e voucher
-- Frontend admin settings page (apenas API backend pronta)
 
 ### Scripts de desenvolvimento (raiz)
 - `npm run dev` — inicia backend + frontend em paralelo (concurrently)

@@ -55,6 +55,13 @@ export default function AdminLayout({
             <span className="w-5 h-5">💎</span>
             <span className="font-medium">VIP</span>
           </a>
+          <a
+            href="/admin/settings"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all"
+          >
+            <span className="w-5 h-5">⚙️</span>
+            <span className="font-medium">Configurações</span>
+          </a>
         </nav>
         <div className="p-4 border-t border-slate-800">
           <a

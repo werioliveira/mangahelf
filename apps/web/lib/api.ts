@@ -42,6 +42,19 @@ export type SearchSeriesResponse = {
   results: SearchSeriesResult[];
 };
 
+export type Setting = {
+  key: string;
+  value: string;
+  type: string;
+  setting_group: string;
+  updated_at: string;
+};
+
+export type SettingsResponse = {
+  settings: Setting[];
+  total: number;
+};
+
 // ---------------------------------------------------------------------------
 // Fetch cru (Server Components) — sem deduplicação automática
 // ---------------------------------------------------------------------------
@@ -57,6 +70,32 @@ export async function searchSeries(
   return fetchJson<SearchSeriesResponse>(`/search?${params}`);
 }
 
+export async function fetchSettings(group?: string): Promise<SettingsResponse> {
+  const params = new URLSearchParams();
+  if (group) params.set("group", group);
+  return fetchJson<SettingsResponse>(`/admin/settings?${params}`);
+}
+
+export async function updateSetting(
+  key: string,
+  value: unknown,
+  type?: string,
+  settingGroup?: string,
+): Promise<void> {
+  const body: Record<string, unknown> = { value };
+  if (type) body.type = type;
+  if (settingGroup) body.setting_group = settingGroup;
+  const res = await fetch(`${API_URL}/admin/settings/${key}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Falha ao atualizar ${key}: ${res.status} ${text}`);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // SWR hooks (Client Components) — deduplicação automática
 // ---------------------------------------------------------------------------
@@ -67,6 +106,18 @@ export function useSearchSeries(query: string, limit = 20, publicOnly = false) {
     async (url: string) => {
       const res = await fetch(`${API_URL}${url}`, { cache: "no-store" });
       if (!res.ok) return { query, limit, offset: 0, total: 0, results: [] };
+      return res.json();
+    },
+    { revalidateOnFocus: false, dedupingInterval: 60_000 },
+  );
+}
+
+export function useSettings(group?: string) {
+  return useSWR<SettingsResponse | null>(
+    group ? `/admin/settings?group=${encodeURIComponent(group)}` : "/admin/settings",
+    async (url: string) => {
+      const res = await fetch(`${API_URL}${url}`, { cache: "no-store" });
+      if (!res.ok) return { settings: [], total: 0 };
       return res.json();
     },
     { revalidateOnFocus: false, dedupingInterval: 60_000 },
