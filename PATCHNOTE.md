@@ -15,10 +15,11 @@
 - `go.mod` — módulo único `github.com/mangashelf/mangashelf` (Go 1.22)
 - `internal/config/config.go` — loader de config com validação de boot (drivers válidos, combinações inválidas falham com mensagem clara)
 - `internal/ports/ports.go` — interfaces: `Storage`, `SearchEngine`, `ImageURLBuilder`, `Cache`, `Authenticator`, `Authorizer`
-- Adaptadores: `storage/local` (funcional), `storage/s3` (stub), `search/postgres` (stub), `cache/memory` (funcional), `auth/builtin` (stub)
+- Adaptadores: `storage/local` (funcional), `storage/s3` (funcional, aws-sdk-go-v2), `search/postgres` (stub), `cache/memory` (funcional), `auth/builtin` (stub)
 - `cmd/api/main.go` — servidor chi com `/healthz`, middleware (request ID, real IP, recovery, logger, timeout), desligamento graceful
 - `cmd/worker/main.go` — entrypoint do worker
-- `migrations/0001_initial/{up,down}.sql` — schema inicial: users, groups, permissions/roles/role_permissions/user_roles/group_members/user_overrides (sistema de permissão atômica §4.2), series, chapters (access/public_at §5.4), vip_plans/memberships/vouchers, audit_log (+ índices). Reversível.
+- `migrations/0001_initial/{up,down}.sql` — schema inicial: users, groups, permissions/roles/role_permissions/user_roles/group_members/user_overrides (sistema de permissão atômica §4.2), series, chapters (access/public_at/storage_key §5.4), vip_plans/memberships/vouchers, audit_log (+ índices). Reversível.
+- `migrations/0002_add_storage_key_chapters/{up,down}.sql` — adiciona `storage_key` à tabela `chapters` (reversível)
 - `deploy/docker-compose.yml` — perfis: postgres, meilisearch, redis, imgproxy, api, worker
 - `deploy/Caddyfile` — headers de segurança (§7.3)
 - `deploy/.env.example` — variáveis de ambiente
@@ -63,8 +64,7 @@
 - Validação E2E contra Postgres ao vivo: ZIP com 3 páginas → worker processa → capítulo `processing` → `published`
 
 ### Não incluído (escopo deliberado / YAGNI)
-- `apps/web/` (Next.js vazio — frontend existe como stub; painel de upload vem na Fase 1 posterior)
-- Worker ainda não processa jobs de mídia (entrypoint existe como stub; capítulo fica em `processing` até o worker ser implementado)
+- `apps/web/` — frontend Next.js 15 existente (App Router, Tailwind, componentes prontos); painel de upload/admin ainda são stubs (página admin diz "Painel em construção")
 - Adapter search/postgres e auth/builtin ainda são stubs (`errNotImplemented`)
 - sqlc, oauth, meilisearch/redis/imgproxy (desativados, rodam no WSL)
 - Testes de integração com banco real
