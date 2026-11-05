@@ -87,6 +87,26 @@
   - Capítulo early com public_at futuro + não-VIP: 403
   - Frontend Next.js build: `next build` passa (11 rotas, dinâmica `/manga/[slug]/capitulos/[n]` server-rendered)
 
+### VIP e controle de acesso (Fase 1 MVP)
+- `internal/services/vip.go` — `VipService`: `CreatePlan`, `ListPlans`, `GrantVip`, `RedeemVoucher`, `GetVipStatus`, `CreateVoucher`
+- `internal/adapters/httpapi/vip.go` — handlers: `GET/POST /vip/plans`, `POST /vip/grant`, `POST /vip/voucher`, `POST /vip/vouchers`, `GET /vip/me`
+- `internal/services/access.go` — `AccessResolver.CanRead` já integra vip_memberships (VIP lê capítulos vip_only e early imediatamente)
+- `migrations/0004_vip_duration_text` — duracao de interval para text
+- `migrations/0005_vip_duration_days` — duracao de text para integer (dias)
+- `cmd/api/main.go` — registra rotas de VIP quando `DATABASE_URL` definida
+- Validação E2E contra Postgres ao vivo:
+  - Criar plano (duration: 30 dias): 201
+  - Listar planos: 200
+  - Conceder VIP: 204
+  - Status VIP: has_active_vip=true, plan_name, expires_at, days_remaining, source
+
+### Não incluído (escopo deliberado / YAGNI)
+- `apps/web/` — frontend Next.js 15 existente (App Router, Tailwind, componentes prontos); painel de upload/admin ainda são stubs (página admin diz "Painel em construção")
+- Adapter search/postgres e auth/builtin ainda são stubs (`errNotImplemented`)
+- sqlc, oauth, meilisearch/redis/imgproxy (desativados, rodam no WSL)
+- Testes de integração com banco real
+- Pagamento real (Stripe/Pix) — apenas concessão manual e voucher
+
 ### Scripts de desenvolvimento (raiz)
 - `npm run dev` — inicia backend + frontend em paralelo (concurrently)
 - `npm run dev:backend` — inicia API Go (scripts/dev-backend.ps1)

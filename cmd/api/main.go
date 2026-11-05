@@ -101,6 +101,11 @@ func main() {
 		readerHandler := httpapi.NewReaderHandler(pageSvc, imageSvc, authSvc, accessSvc)
 		readerHandler.RegisterRoutes(r)
 		slog.Info("rotas de leitor registradas")
+
+		vipSvc := services.NewVipService(db)
+		vipHandler := httpapi.NewVipHandler(vipSvc, authSvc)
+		vipHandler.RegisterRoutes(r)
+		slog.Info("rotas de vip registradas")
 	} else {
 		slog.Warn("DATABASE_URL nao definida; rotas de auth e catalogo indisponiveis")
 	}
