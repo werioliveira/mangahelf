@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/alexedwards/scs/v2"
 	_ "github.com/lib/pq"
 	"github.com/mangashelf/mangashelf/internal/adapters/httpapi"
 	"github.com/mangashelf/mangashelf/internal/adapters/search/meilisearch"
@@ -21,7 +22,6 @@ import (
 	"github.com/mangashelf/mangashelf/internal/adapters/storage/s3"
 	"github.com/mangashelf/mangashelf/internal/config"
 	"github.com/mangashelf/mangashelf/internal/services"
-	serviceAuth "github.com/mangashelf/mangashelf/internal/services/auth"
 	"github.com/mangashelf/mangashelf/internal/services/oidc"
 	"github.com/mangashelf/mangashelf/internal/ports"
 )
@@ -77,6 +77,27 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Timeout(60 * time.Second))
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-CSRF-Token")
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	})
+
+	sm := scs.New()
+	sm.Cookie.Name = "ms_session"
+	sm.Cookie.Path = "/"
+	sm.Cookie.Secure = false
+	sm.Cookie.HttpOnly = true
+	sm.Cookie.SameSite = http.SameSiteLaxMode
+	r.Use(sm.LoadAndSave)
 
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -84,7 +105,7 @@ func main() {
 	})
 
 	if db != nil {
-		authSvc := services.NewAuthService(db, cfg)
+		authSvc := services.NewAuthService(db, sm)
 		authHandler := httpapi.NewAuthHandler(authSvc)
 		authHandler.RegisterRoutes(r)
 		slog.Info("rotas de auth registradas")
@@ -112,18 +133,18 @@ func main() {
 		vipHandler.RegisterRoutes(r)
 		slog.Info("rotas de vip registradas")
 
-		adminSvc := services.NewAdminService(db)
-		adminHandler := httpapi.NewAdminHandler(adminSvc, authSvc)
-		adminHandler.RegisterRoutes(r)
-		slog.Info("rotas de admin registradas")
-
 		settingsSvc := services.NewSettingService(db)
 		settingsHandler := httpapi.NewSettingsHandler(settingsSvc, authSvc)
 		settingsHandler.RegisterRoutes(r)
 		slog.Info("rotas de configuracoes registradas")
 
+		adminSvc := services.NewAdminService(db)
+		adminHandler := httpapi.NewAdminHandler(adminSvc, authSvc, chapterSvc)
+		adminHandler.RegisterRoutes(r)
+		slog.Info("rotas de admin registradas")
+
 		// OIDC / OAuth2
-		authService := serviceAuth.New(db)
+		authService := services.NewAuthService(db, sm)
 		oidcSvc := oidc.NewAuthService(db, authService)
 		oidcHandler := httpapi.NewOIDCHandler(oidcSvc, authService)
 		oidcHandler.RegisterRoutes(r)

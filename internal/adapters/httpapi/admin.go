@@ -12,10 +12,11 @@ import (
 type AdminHandler struct {
 	adminSvc *services.AdminService
 	authSvc  *services.AuthService
+	chapterSvc *services.ChapterService
 }
 
-func NewAdminHandler(adminSvc *services.AdminService, authSvc *services.AuthService) *AdminHandler {
-	return &AdminHandler{adminSvc: adminSvc, authSvc: authSvc}
+func NewAdminHandler(adminSvc *services.AdminService, authSvc *services.AuthService, chapterSvc *services.ChapterService) *AdminHandler {
+	return &AdminHandler{adminSvc: adminSvc, authSvc: authSvc, chapterSvc: chapterSvc}
 }
 
 func (h *AdminHandler) RegisterRoutes(r chi.Router) {
@@ -23,6 +24,8 @@ func (h *AdminHandler) RegisterRoutes(r chi.Router) {
 		r.Use(h.requireStaffMiddleware)
 		r.Get("/series", h.listSeries)
 		r.Get("/users", h.listUsers)
+		r.Patch("/users/{id}", h.updateUser)
+		r.Get("/chapters", h.listChapters)
 		r.Patch("/chapters/{id}", h.updateChapter)
 	})
 }
@@ -87,6 +90,39 @@ func (h *AdminHandler) updateChapter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *AdminHandler) updateUser(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		http.Error(w, "user_id invalido", http.StatusBadRequest)
+		return
+	}
+
+	var in services.AdminUserUpdate
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		http.Error(w, "body invalido", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.adminSvc.UpdateUserAdmin(r.Context(), id, in); err != nil {
+		if err.Error() == "usuario nao encontrado" {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *AdminHandler) listChapters(w http.ResponseWriter, r *http.Request) {
+	list, err := h.chapterSvc.List(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, http.StatusOK, list)
 }
 
 // ensure strconv is imported even if not directly used in this file after refactor

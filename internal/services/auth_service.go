@@ -9,18 +9,19 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/mangashelf/mangashelf/internal/ports"
+	"github.com/alexedwards/scs/v2"
 	"golang.org/x/crypto/argon2"
 )
 
 type AuthService struct {
 	db *sql.DB
+	sm *scs.SessionManager
 }
 
-func NewAuthService(db *sql.DB) *AuthService {
-	return &AuthService{db: db}
+func NewAuthService(db *sql.DB, sm *scs.SessionManager) *AuthService {
+	return &AuthService{db: db, sm: sm}
 }
 
 // HashPassword gera um hash argon2id da senha
@@ -65,13 +66,12 @@ func VerifyPassword(password, hash string) bool {
 func (s *AuthService) Login(ctx context.Context, email, password string, ipAddress, userAgent string) (*ports.User, error) {
 	var userID string
 	var passwordHash sql.NullString
-	var isActive bool
-	var lockedUntil sql.NullTime
+	var status string
 
 	err := s.db.QueryRowContext(ctx,
-		`SELECT id, password_hash, is_active, locked_until FROM users WHERE email = $1`,
+		`SELECT id, password_hash, status FROM users WHERE email = $1`,
 		email,
-	).Scan(&userID, &passwordHash, &isActive, &lockedUntil)
+	).Scan(&userID, &passwordHash, &status)
 
 	if err == sql.ErrNoRows {
 		s.recordLoginAttempt(ctx, email, ipAddress, userAgent, false, "usuario nao encontrado")
@@ -81,11 +81,9 @@ func (s *AuthService) Login(ctx context.Context, email, password string, ipAddre
 		return nil, err
 	}
 
-	if lockedUntil.Valid && lockedUntil.Time.After(time.Now()) {
-		return nil, errors.New("conta bloqueada temporariamente")
-	}
+	// account lock check removed (no locked_until column)
 
-	if !isActive {
+	if status != "active" {
 		return nil, errors.New("usuario inativo")
 	}
 
@@ -149,20 +147,13 @@ func (s *AuthService) Register(ctx context.Context, email, name, password string
 // GetUserByID busca um usuário por ID
 func (s *AuthService) GetUserByID(ctx context.Context, userID string) (*ports.User, error) {
 	var u ports.User
-	var name sql.NullString
 	var passwordHash sql.NullString
-	var roles sql.NullString
-	var groups sql.NullString
+	var status string
 
 	err := s.db.QueryRowContext(ctx,
-		`SELECT id, email, name, password_hash, is_active, email_verified, oauth_provider,
-		 oauth_provider_id, roles, groups, created_at, updated_at, last_login_at,
-		 failed_login_attempts, locked_until
-		 FROM users WHERE id = $1`,
+		`SELECT id, email, username, password_hash, status FROM users WHERE id = $1`,
 		userID,
-	).Scan(&u.ID, &u.Email, &name, &passwordHash, &u.IsActive, &u.EmailVerified,
-		&u.OAuthProvider, &u.OAuthProviderID, &u.Roles, &u.Groups, &u.CreatedAt, &u.UpdatedAt,
-		&u.LastLoginAt, &u.FailedLoginAttempts, &u.LockedUntil)
+	).Scan(&u.ID, &u.Email, &u.Name, &passwordHash, &status)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -171,18 +162,10 @@ func (s *AuthService) GetUserByID(ctx context.Context, userID string) (*ports.Us
 		return nil, err
 	}
 
-	if name.Valid {
-		u.Name = name.String
-	}
 	if passwordHash.Valid {
 		u.PasswordHash = passwordHash.String
 	}
-	if roles.Valid {
-		u.Roles = []string{roles.String}
-	}
-	if groups.Valid {
-		u.Groups = []string{groups.String}
-	}
+	u.IsActive = (status == "active")
 
 	return &u, nil
 }
@@ -285,16 +268,15 @@ func (s *AuthService) recordLoginAttempt(ctx context.Context, email, ipAddress, 
 
 func (s *AuthService) incrementFailedLogin(ctx context.Context, email string) {
 	s.db.ExecContext(ctx,
-		`UPDATE users SET failed_login_attempts = failed_login_attempts + 1,
-		 locked_until = now() + interval '15 minutes'
-		 WHERE email = $1 AND failed_login_attempts + 1 >= 5`,
+		`UPDATE users SET failed_login_attempts = failed_login_attempts + 1
+		 WHERE email = $1`,
 		email,
 	)
 }
 
 func (s *AuthService) resetFailedLogin(ctx context.Context, email string) {
 	s.db.ExecContext(ctx,
-		`UPDATE users SET failed_login_attempts = 0, locked_until = NULL
+		`UPDATE users SET failed_login_attempts = 0
 		 WHERE email = $1`,
 		email,
 	)
@@ -339,30 +321,19 @@ func (s *AuthService) CreateOIDCUser(ctx context.Context, email, name, provider,
 }
 
 // SaveSession salva a sessão do usuário (cookie httpOnly).
-// Nota: esta é uma implementação simplificada. A sessão real é gerenciada
-// pelo middleware de sessão do aplicativo principal.
 func (s *AuthService) SaveSession(w http.ResponseWriter, r *http.Request, userID string) error {
-	_ = w
-	_ = r
-	_ = userID
+	s.sm.Put(r.Context(), "uid", userID)
 	return nil
 }
 
 // UserIDFromSession extrai o ID do usuário da sessão.
-// Nota: esta é uma implementação simplificada. A sessão real é gerenciada
-// pelo middleware de sessão do aplicativo principal.
 func (s *AuthService) UserIDFromSession(r *http.Request) (string, bool) {
-	cookie, err := r.Cookie("mangashelf-session")
-	if err != nil {
-		return "", false
-	}
-	return cookie.Value, true
+	uid := s.sm.GetString(r.Context(), "uid")
+	return uid, uid != ""
 }
 
 // ClearSession limpa a sessão do usuário.
-// Nota: esta é uma implementação simplificada.
 func (s *AuthService) ClearSession(w http.ResponseWriter, r *http.Request) error {
-	_ = w
-	_ = r
+	s.sm.Destroy(r.Context())
 	return nil
 }

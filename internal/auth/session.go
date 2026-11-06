@@ -57,7 +57,7 @@ func NewSessionManager(pool *pgxpool.Pool, cfg Config) *scs.SessionManager {
 	sm.Lifetime    = cfg.SessionAbsoluteTTL
 	sm.IdleTimeout = cfg.SessionIdleTTL
 
-	sm.Cookie.Name     = "__Host-ms_session"
+	sm.Cookie.Name     = "ms_session"
 	sm.Cookie.Path     = "/"
 	sm.Cookie.Secure   = cfg.CookieSecure
 	sm.Cookie.HttpOnly = true

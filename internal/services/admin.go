@@ -21,15 +21,15 @@ func NewAdminService(db *sql.DB) *AdminService {
 // chapter.publish, chapter.set_access, media.manage ou report.handle).
 func (s *AdminService) IsStaff(ctx context.Context, userID string) (bool, error) {
 	var exists bool
-	err := s.db.QueryRowContext(ctx,
-		`SELECT EXISTS(
-		 SELECT 1 FROM user_roles ur
-		 JOIN role_permissions rp ON rp.role_id = ur.role_id
-		 WHERE ur.user_id = $1
-		   AND rp.permission_key IN ('chapter.publish','chapter.set_access','media.manage','report.handle')
-		)`,
-		userID,
-	).Scan(&exists)
+    err := s.db.QueryRowContext(ctx,
+        `SELECT EXISTS(
+             SELECT 1 FROM user_roles ur
+             JOIN role_permissions rp ON rp.role_id = ur.role_id
+             WHERE ur.user_id = $1::uuid
+               AND rp.permission_key IN ('chapter.publish','chapter.set_access','media.manage','report.handle')
+        )`,
+        userID,
+    ).Scan(&exists)
 	if err != nil {
 		return false, err
 	}
@@ -150,7 +150,7 @@ type AdminUser struct {
 // ListUsersAdmin lista todos os usuarios para moderacao.
 func (s *AdminService) ListUsersAdmin(ctx context.Context) ([]AdminUser, error) {
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT u.id, u.email, u.is_active,
+		`SELECT u.id, u.email, u.status,
 		       COALESCE(string_agg(DISTINCT rp.permission_key, ','), '') as roles,
 		       CASE WHEN vm.expires_at > now() THEN true ELSE false END as has_vip,
 		       vm.expires_at as vip_expires,
@@ -159,7 +159,7 @@ func (s *AdminService) ListUsersAdmin(ctx context.Context) ([]AdminUser, error) 
 		 LEFT JOIN user_roles ur ON ur.user_id = u.id
 		 LEFT JOIN role_permissions rp ON rp.role_id = ur.role_id
 		 LEFT JOIN vip_memberships vm ON vm.user_id = u.id AND vm.expires_at > now()
-		 GROUP BY u.id, u.email, u.is_active, vm.expires_at, u.created_at
+		 GROUP BY u.id, u.email, u.status, vm.expires_at, u.created_at
 		 ORDER BY u.created_at DESC`)
 	if err != nil {
 		return nil, err
@@ -168,13 +168,15 @@ func (s *AdminService) ListUsersAdmin(ctx context.Context) ([]AdminUser, error) 
 
 	var out []AdminUser
 	for rows.Next() {
-		var u AdminUser
-		var roles sql.NullString
-		var hasVip sql.NullBool
-		var vipExpires sql.NullTime
-		if err := rows.Scan(&u.ID, &u.Email, &u.IsActive, &roles, &hasVip, &vipExpires, &u.CreatedAt); err != nil {
-			return nil, err
-		}
+	var u AdminUser
+	var roles sql.NullString
+	var status string
+	var hasVip sql.NullBool
+	var vipExpires sql.NullTime
+	if err := rows.Scan(&u.ID, &u.Email, &status, &roles, &hasVip, &vipExpires, &u.CreatedAt); err != nil {
+		return nil, err
+	}
+	u.IsActive = (status == "active")
 		if roles.Valid {
 			u.Roles = roles.String
 		}
@@ -190,3 +192,43 @@ func (s *AdminService) ListUsersAdmin(ctx context.Context) ([]AdminUser, error) 
 }
 
 var _ = errors.New
+
+// AdminUserUpdate representa mudancas permitidas por admin em um usuario.
+type AdminUserUpdate struct {
+	Status *string `json:"status,omitempty"`
+}
+
+// UpdateUserAdmin permite que staff edite o status de um usuario.
+func (s *AdminService) UpdateUserAdmin(ctx context.Context, userID string, in AdminUserUpdate) error {
+	var exists bool
+	err := s.db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM users WHERE id=$1)", userID).Scan(&exists)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return errors.New("usuario nao encontrado")
+	}
+
+	sets := []string{}
+	args := []any{}
+	argIdx := 1
+	if in.Status != nil {
+		sets = append(sets, "status=$"+strconv.Itoa(argIdx))
+		args = append(args, *in.Status)
+		argIdx++
+	}
+	if len(sets) == 0 {
+		return errors.New("nenhum campo para atualizar")
+	}
+	sets = append(sets, "updated_at=now()")
+	args = append(args, userID)
+
+	query := "UPDATE users SET " + sets[0]
+	for i := 1; i < len(sets); i++ {
+		query += ", " + sets[i]
+	}
+	query += " WHERE id=$" + strconv.Itoa(argIdx)
+
+	_, err = s.db.ExecContext(ctx, query, args...)
+	return err
+}

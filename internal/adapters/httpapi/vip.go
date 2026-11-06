@@ -42,6 +42,12 @@ func (h *VipHandler) RegisterRoutes(r chi.Router) {
 		r.Post("/vouchers", h.createVoucher)
 		r.Get("/me", h.me)
 	})
+	r.Route("/admin/vip", func(r chi.Router) {
+		r.Use(h.requireAuthMiddleware)
+		r.Get("/plans", h.listPlans)
+		r.Post("/plans", h.createPlan)
+		r.Patch("/plans/{id}", h.updatePlan)
+	})
 }
 
 func (h *VipHandler) listPlans(w http.ResponseWriter, r *http.Request) {
@@ -51,6 +57,30 @@ func (h *VipHandler) listPlans(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, plans)
+}
+
+func (h *VipHandler) updatePlan(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		http.Error(w, "plan_id invalido", http.StatusBadRequest)
+		return
+	}
+
+	var in services.VipPlanUpdate
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		http.Error(w, "body invalido", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.vipSvc.UpdatePlan(r.Context(), id, in); err != nil {
+		if err.Error() == "plano nao encontrado" {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *VipHandler) createPlan(w http.ResponseWriter, r *http.Request) {

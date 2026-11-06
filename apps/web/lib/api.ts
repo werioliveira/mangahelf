@@ -93,7 +93,7 @@ export async function updateSetting(
   if (settingGroup) body.setting_group = settingGroup;
   const res = await fetch(`${API_URL}/admin/settings/${key}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" }, credentials: "include",
     body: JSON.stringify(body),
   });
   if (!res.ok) {
@@ -110,7 +110,7 @@ export function useSearchSeries(query: string, limit = 20, publicOnly = false) {
   return useSWR<SearchSeriesResponse | null>(
     query ? `/search?q=${encodeURIComponent(query)}&limit=${limit}&public_only=${publicOnly}` : null,
     async (url: string) => {
-      const res = await fetch(`${API_URL}${url}`, { cache: "no-store" });
+      const res = await fetch(`${API_URL}${url}`, { cache: "no-store", credentials: "include" });
       if (!res.ok) return { query, limit, offset: 0, total: 0, results: [] };
       return res.json();
     },
@@ -122,7 +122,7 @@ export function useSettings(group?: string) {
   return useSWR<SettingsResponse | null>(
     group ? `/admin/settings?group=${encodeURIComponent(group)}` : "/admin/settings",
     async (url: string) => {
-      const res = await fetch(`${API_URL}${url}`, { cache: "no-store" });
+      const res = await fetch(`${API_URL}${url}`, { cache: "no-store", credentials: "include" });
       if (!res.ok) return { settings: [], total: 0 };
       return res.json();
     },
@@ -134,7 +134,7 @@ export function useThemeSettings() {
   return useSWR<ThemeSettings | null>(
     "/admin/settings?group=ui",
     async (url: string) => {
-      const res = await fetch(`${API_URL}${url}`, { cache: "no-store" });
+      const res = await fetch(`${API_URL}${url}`, { cache: "no-store", credentials: "include" });
       if (!res.ok) return null;
       const data = await res.json();
       const settings = data.settings ?? [];
@@ -150,7 +150,7 @@ export function useThemeSettings() {
 }
 
 async function fetchJson<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, { cache: "no-store" });
+  const res = await fetch(`${API_URL}${path}`, { cache: "no-store", credentials: "include" });
   if (!res.ok) {
     throw new Error(`Falha ao buscar ${path}: ${res.status}`);
   }
@@ -194,7 +194,7 @@ export function useChapterLookup(slug: string | null, number: number | null) {
   return useSWR<Chapter | null>(
     slug && number ? `/chapters/lookup?series_slug=${encodeURIComponent(slug)}&number=${number}` : null,
     async (url: string) => {
-      const res = await fetch(`${API_URL}${url}`, { cache: "no-store" });
+      const res = await fetch(`${API_URL}${url}`, { cache: "no-store", credentials: "include" });
       if (!res.ok) return null;
       return res.json();
     },
@@ -206,7 +206,7 @@ export function useChapterPages(chapterId: string | null, variant = "full") {
   return useSWR<ChapterPagesResponse | null>(
     chapterId ? `/chapters/${chapterId}/pages?variant=${encodeURIComponent(variant)}` : null,
     async (url: string) => {
-      const res = await fetch(`${API_URL}${url}`, { cache: "no-store" });
+      const res = await fetch(`${API_URL}${url}`, { cache: "no-store", credentials: "include" });
       if (!res.ok) return [];
       return res.json();
     },

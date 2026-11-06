@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -250,3 +251,56 @@ func (s *VipService) CreateVoucher(ctx context.Context, planID string, maxUses i
 }
 
 var _ = fmt.Sprintf
+
+// VipPlanUpdate representa mudancas permitidas em um plano VIP.
+type VipPlanUpdate struct {
+	Name        *string `json:"name,omitempty"`
+	Duration    *int    `json:"duration,omitempty"`
+	Perks       *string `json:"perks,omitempty"`
+	IsActive    *bool   `json:"is_active,omitempty"`
+}
+
+// UpdatePlan permite editar um plano VIP existente.
+func (s *VipService) UpdatePlan(ctx context.Context, planID string, in VipPlanUpdate) error {
+	var exists bool
+	err := s.db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM vip_plans WHERE id=$1)", planID).Scan(&exists)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return errors.New("plano nao encontrado")
+	}
+
+	sets := []string{}
+	args := []any{}
+	argIdx := 1
+	if in.Name != nil {
+		sets = append(sets, "name=$"+strconv.Itoa(argIdx))
+		args = append(args, *in.Name)
+		argIdx++
+	}
+	if in.Duration != nil {
+		sets = append(sets, "duration=$"+strconv.Itoa(argIdx))
+		args = append(args, *in.Duration)
+		argIdx++
+	}
+	if in.Perks != nil {
+		sets = append(sets, "perks=$"+strconv.Itoa(argIdx))
+		args = append(args, *in.Perks)
+		argIdx++
+	}
+	if len(sets) == 0 {
+		return errors.New("nenhum campo para atualizar")
+	}
+	sets = append(sets, "created_at=now()")
+	args = append(args, planID)
+
+	query := "UPDATE vip_plans SET " + sets[0]
+	for i := 1; i < len(sets); i++ {
+		query += ", " + sets[i]
+	}
+	query += " WHERE id=$" + strconv.Itoa(argIdx)
+
+	_, err = s.db.ExecContext(ctx, query, args...)
+	return err
+}

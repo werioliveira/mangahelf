@@ -42,7 +42,7 @@ func DefaultConfig() Config {
 	return Config{
 		SessionAbsoluteTTL: 30 * 24 * time.Hour,
 		SessionIdleTTL:     7 * 24 * time.Hour,
-		CookieSecure:       true,
+		CookieSecure:       false,
 		CookieDomain:       "",
 		MaxSessionsPerUser: 10,
 		Argon2Memory:       64 * 1024,

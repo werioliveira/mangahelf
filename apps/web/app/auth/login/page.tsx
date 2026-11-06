@@ -3,8 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, ArrowRight, Github, Google } from "lucide-react";
-import { btnPrimary, btnOutline } from "@/lib/ui";
+import { Mail, Lock, ArrowRight } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -24,6 +23,7 @@ export default function LoginPage() {
       const res = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
@@ -31,8 +31,7 @@ export default function LoginPage() {
         throw new Error("Email ou senha inválidos");
       }
 
-      // O cookie de sessão é definido automaticamente pelo servidor
-      const next = window.location.searchParams.get("next") || "/";
+      const next = new URLSearchParams(window.location.search).get("next") || "/";
       router.push(next);
       router.refresh();
     } catch (err: any) {
@@ -43,26 +42,26 @@ export default function LoginPage() {
   };
 
   const handleOIDCLogin = (provider: string) => {
-    window.location.href = `${API_URL}/auth/oidc/${provider}?next=${encodeURIComponent(window.location.searchParams.get("next") || "/")}`;
+    window.location.href = `${API_URL}/auth/oidc/${provider}?next=${encodeURIComponent(new URLSearchParams(window.location.search).get("next") || "/")}`;
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center bg-slate-50 px-4">
+    <section className="relative min-h-screen flex items-center justify-center bg-background px-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 text-primary">
               <Mail className="w-5 h-5" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">MangaShelf</h1>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">MangaShelf</h1>
           </div>
-          <p className="text-sm text-slate-600">Bem-vindo de volta. Faça login para continuar.</p>
+          <p className="text-sm text-muted-foreground">Bem-vindo de volta. Faça login para continuar.</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+        <div className="bg-card rounded-2xl border border-border shadow-sm p-8">
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 E-mail
               </label>
               <input
@@ -70,14 +69,14 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                className="w-full rounded-lg border border-border px-4 py-3 text-foreground bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                 required
                 autoComplete="email"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Senha
               </label>
               <input
@@ -85,7 +84,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                className="w-full rounded-lg border border-border px-4 py-3 text-foreground bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                 required
                 autoComplete="current-password"
               />
@@ -115,31 +114,23 @@ export default function LoginPage() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-slate-200"></span>
+              <span className="w-full border-t border-border"></span>
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-slate-500">Ou continuar com</span>
+              <span className="bg-card px-2 text-muted-foreground">Ou continuar com</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <button
               onClick={() => handleOIDCLogin("google")}
-              className="flex items-center justify-center gap-2 w-full py-3 px-4 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+              className="flex items-center justify-center gap-2 w-full py-3 px-4 border border-border rounded-lg text-sm font-medium text-foreground bg-background hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
             >
-              <Google className="w-4 h-4" />
               Google
-            </button>
-            <button
-              onClick={() => handleOIDCLogin("github")}
-              className="flex items-center justify-center gap-2 w-full py-3 px-4 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
-            >
-              <Github className="w-4 h-4" />
-              GitHub
             </button>
           </div>
 
-          <p className="text-center text-sm text-slate-600">
+          <p className="text-center text-sm text-muted-foreground">
             Não tem uma conta?{" "}
             <Link
               href="/auth/register"
@@ -151,7 +142,7 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
+          <div className="bg-destructive/10 border border-destructive rounded-lg p-4 text-sm text-destructive">
             {error}
           </div>
         )}

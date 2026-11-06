@@ -1,69 +1,65 @@
-# Patch notes â€” MangaShelf
+# Changelog — MangaShelf
 
-## 0.2.0 â€” 2026-11-05 Â· Auth & AuthZ Backend (`internal/auth/`, `internal/authz/`, `internal/audit/`)
+## 0.2.0 — 2026-11-05 · Auth & AuthZ Backend
+### Adicionado
+- internal/auth: sistema completo de autenticação
+  - Hash Argon2id com semáforo de concorrência, política de senhas, NFKC normalization
+  - Sessões SCS com store hashed (SHA256), cookie __Host-/ms_session httpOnly, SameSite=Lax, idle/absolute TTL, revogação
+  - CSRF: Fetch Metadata + Origin allowlist + token por sessão (X-CSRF-Token)
+  - Rate limiting com backoff progressivo, HMAC email hash
+  - One-time tokens (verify_email/reset/change_email) com consumo atômico
+  - MFA TOTP (AES-256-GCM), recovery codes HMAC-SHA256
+  - WebAuthn/Passkeys (discoverable, sign count, clone detection)
+  - Flows completos de auth (register/login/logout/forgot/reset/change/verify/reauth)
+  - Auditoria append-only com trigger imutável
+- internal/authz: autorização deny-by-default, resolver com deny vence allow, anti-escalação por posição, policy router com checagem em CI
+- internal/audit: logging estruturado
+- Schema auth (0009): users, sessions, user_sessions, auth_tokens, TOTP, recovery codes, WebAuthn, permissions/roles/role_permissions/user_roles/group_members/user_overrides, bans, audit_log
+- Novas rotas auth/OIDC integradas
 
-**Adicionado**
-- `internal/auth`: sistema completo de autenticaÃ§Ã£o conforme AUTH.md
-  - Password hashing: Argon2id com semÃ¡foro de concorrÃªncia, polÃ­tica 12+ chars, bloqueio senhas comuns, NFKC normalization
-  - Sessions: SCS com store hashed (SHA256 token), `__Host-` cookie, SameSite=Lax, idle/absolute TTL, revogaÃ§Ã£o imediata
-  - CSRF: Fetch Metadata + Origin allowlist + token por sessÃ£o (header `X-CSRF-Token`)
-  - Rate limiting: in-memory com backoff progressivo, HMAC email hash, fail-closed em auth
-  - One-time tokens: email verify (24h), password reset (30min), email change (1h), consumo atÃ´mico
-  - MFA: TOTP (AES-256-GCM encrypted secrets, key rotation, replay protection), recovery codes (HMAC-SHA256)
-  - WebAuthn/Passkeys: discoverable credentials, sign count verification, clone detection
-  - Flows: register, login (com MFA challenge), logout, forgot/reset/change password, change email, verify email, reauth (step-up)
-  - Auditoria: append-only `audit_log` com trigger imutÃ¡vel
-- `internal/authz`: autorizaÃ§Ã£o deny-by-default
-  - Permission catalog tipado (32 permissions, scopes global/group, MFA flags)
-  - Resolver: avalia deny overrides â†’ allow overrides â†’ group role â†’ global role (deny vence allow)
-  - Anti-escalaÃ§Ã£o: position-based, ator deve possuir todas permissÃµes do role, proteÃ§Ã£o Ãºltimo owner
-  - Policy router: Public / Authenticated / Require(perm, scopeFn) com teste CI que falha se rota sem policy
-- `internal/audit`: logging estruturado com actor, action, target, before/after, IP, UA
-- Database schema (migration 0009): users, sessions, user_sessions, auth_tokens, TOTP, recovery codes, WebAuthn, permissions, roles, role_permissions, user_roles, group_members, user_overrides, bans, audit_log
-- Dependencies: scs, pgxstore, pgx/v5, webauthn, otp, x/time, x/text, pgconn
+### Removido
+- internal/services/auth.go, internal/services/auth/service.go, internal/services/auth_test.go (antigo)
+- internal/services/oidc/auth.go (stub antigo)
+- internal/adapters/httpapi/middleware/auth.go
 
-**Removido**
-- `internal/services/auth.go`, `internal/services/auth/service.go`, `internal/services/auth_test.go` (old gorilla/sessions auth)
-- `internal/services/oidc/auth.go` (old OIDC stub)
-- `internal/adapters/httpapi/middleware/auth.go` (old gorilla/sessions middleware)
+### Atualizado
+- go.mod/go.sum com novas dependências
+- cmd/api/main.go: sessões SCS, CORS com OPTIONS, registro de rotas auth/admin/settings/vip/reader/catalog/media
+- internal/services/auth_service.go: novo serviço integrado com SCS
+- internal/adapters/httpapi/*: handlers atualizados
+- deploy/.env.example: variáveis auth
 
-**Atualizado**
-- `go.mod`/`go.sum`: novas dependÃªncias
-- `internal/adapters/httpapi/auth.go`: novo AuthHandler com endpoints completos
-- `internal/adapters/httpapi/oidc.go`: integraÃ§Ã£o OIDC stub
-- `internal/ports/ports.go`: interfaces Authenticator/Authorizer atualizadas
-- `internal/services/oidc/oidc.go`: serviÃ§o OIDC
-- `internal/services/auth_service.go`: novo entry point do serviÃ§o de auth
-- `deploy/.env.example`: variÃ¡veis de configuraÃ§Ã£o auth (SESSION_SECRET, RPID, RP_ORIGINS, ENCRYPTION_KEYS, etc.)
+### Validado
+- go build ./... verde
+- go test ./... verde
 
-**Validado**
-- `go build ./...` verde
-- `go test ./...` verde
+## 0.1.0 — 2026-11-04 · Fundação, Catálogo, Upload, Leitor, VIP, Admin v1
 
-## 0.1.0 â€” 2026-11-04 Â· Frontend web (`apps/web/`)
+### Fundação
+- Monorepo: /cmd/api, /cmd/worker, /internal, /apps/web, /migrations, /api, /deploy, /docs
+- Config/ports/adapters base
+- Migrations 0001-0008 iniciais
+- Docker Compose perfis, Caddyfile com headers de segurança, OpenAPI, CI básico
 
-**Adicionado**
-- Frontend Next.js 15 (App Router) em `apps/web/`, rÃ©plica fiel do design base
-  (`base44html/`): tokens (Ã­ndigo `239 84% 67%` Â· ciano `187 92% 42%` Â· dark `240 10% 6%`),
-  Space Grotesk + Inter, radius 0.75rem â€” marca **MangaShelf**.
-- Home completa: hero de destaque com carrossel e capas empilhadas, carrossel TOP 10 com
-  nÃºmero em contorno, grid "Recentemente Atualizadas" com badges NOVO, sidebar POPULARES
-  com abas DiÃ¡rio/Semanal/Mensal.
-- Rotas: `/library` (busca + filtro por gÃªnero), `/favorites`, `/ranking`, `/vip`,
-  `/profile`, `/admin` (stub), `/manga/[slug]` (detalhe + capÃ­tulos) e
-  `/manga/[slug]/capitulos/[n]` (leitor com prev/next) â€” com `loading`/`error`/`not-found`
-  nas rotas dinÃ¢micas e metadata/OG em todas as pÃ¡ginas.
-- Camada de dados demo `lib/data.ts` no shape da futura API (`api/openapi.yaml`), marcada
-  com `shortcut:` para troca por `fetch` + cache tags.
-- `REVIEW.md` com as recomendaÃ§Ãµes da revisÃ£o de cÃ³digo (4 warnings, 9 sugestÃµes).
+### Autenticação/Catálogo (MVP)
+- Auth com argon2id, sessões cookie httpOnly
+- CRUD séries/capítulos
+- Rotas auth/catalog
 
-**Validado**
-- `next build` verde; First Load JS 116 kB (budget â‰¤ 250 kB); zero violaÃ§Ãµes da skill
-  `mangashelf-frontend-optimized` (sem `useEffect` para fetch, sem `<img>`, server
-  components por padrÃ£o).
+### Storage & Upload
+- S3-compatível primário, worker processa ZIP, publicação automática
+- ImageURLBuilder imgproxy/static
 
-**Conhecido / prÃ³ximo**
-- Warnings da revisÃ£o pendentes: `.env*` no gitignore (coberto nesta versÃ£o), fontes
-  Google no build (vendorizar para deploy self-hosted), imagens de fundo `priority`,
-  datas de capÃ­tulo na pÃ¡gina de detalhe.
-- Sem backend: dados 100% demo; leitor usa pÃ¡ginas placeholder atÃ© o pipeline imgproxy.
+### Leitor
+- Páginas por capítulo com AccessResolver único
+- Rotas leitor/lookup
+
+### VIP
+- Planos, vouchers, concessão, status
+
+### Painel Admin v1
+- Rotas /admin/* protegidas por staff
+
+### Frontend
+- Next.js 15 App Router
+

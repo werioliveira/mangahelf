@@ -1,0 +1,1 @@
+-- down\nDROP SCHEMA public CASCADE;\nCREATE SCHEMA public;\n

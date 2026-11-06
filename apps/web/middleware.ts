@@ -24,7 +24,7 @@ export function middleware(request: NextRequest) {
 
   // Rotas de admin exigem autenticação
   if (pathname.startsWith("/admin")) {
-    const hasSession = request.cookies.has("mangashelf-session");
+    const hasSession = request.cookies.has("ms_session");
 
     if (!hasSession) {
       // Redireciona para login com next para voltar depois
@@ -38,7 +38,7 @@ export function middleware(request: NextRequest) {
 
   // Outras rotas (perfil, etc.) também exigem autenticação
   if (pathname.startsWith("/profile")) {
-    const hasSession = request.cookies.has("mangashelf-session");
+    const hasSession = request.cookies.has("ms_session");
 
     if (!hasSession) {
       const loginUrl = new URL("/auth/login", request.url);
