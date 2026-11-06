@@ -1,8 +1,8 @@
 # MangaShelf
 
-Plataforma open source de hospedagem de mangás.
+Plataforma open source de hospedagem de mangÃ¡s.
 
-Stack: Go + Next.js · PostgreSQL · Self-hosted
+Stack: Go + Next.js Â· PostgreSQL Â· Self-hosted
 
 ## Estrutura
 `
@@ -24,11 +24,11 @@ go run ./cmd/worker
 npm run dev:web
 `
 
-## Documentação
+## DocumentaÃ§Ã£o
 - [Changelog](CHANGELOG.md)
 - [Auth](docs/AUTH.md)
 - [Design Pattern](docs/DESIGN_PATTERN.md)
 - [Roadmap](docs/ROADMAP.md)
 
-Licença AGPL-3.0
-
+LicenÃ§a AGPL-3.0
+

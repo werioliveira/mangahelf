@@ -139,7 +139,7 @@ func main() {
 		slog.Info("rotas de configuracoes registradas")
 
 		adminSvc := services.NewAdminService(db)
-		adminHandler := httpapi.NewAdminHandler(adminSvc, authSvc, chapterSvc)
+		adminHandler := httpapi.NewAdminHandler(adminSvc, authSvc, chapterSvc, seriesSvc)
 		adminHandler.RegisterRoutes(r)
 		slog.Info("rotas de admin registradas")
 

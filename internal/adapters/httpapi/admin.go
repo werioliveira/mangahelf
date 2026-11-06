@@ -3,30 +3,35 @@ package httpapi
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mangashelf/mangashelf/internal/services"
 )
 
 type AdminHandler struct {
-	adminSvc *services.AdminService
-	authSvc  *services.AuthService
+	adminSvc   *services.AdminService
+	authSvc    *services.AuthService
 	chapterSvc *services.ChapterService
+	seriesSvc  *services.SeriesService
 }
 
-func NewAdminHandler(adminSvc *services.AdminService, authSvc *services.AuthService, chapterSvc *services.ChapterService) *AdminHandler {
-	return &AdminHandler{adminSvc: adminSvc, authSvc: authSvc, chapterSvc: chapterSvc}
+func NewAdminHandler(adminSvc *services.AdminService, authSvc *services.AuthService, chapterSvc *services.ChapterService, seriesSvc *services.SeriesService) *AdminHandler {
+	return &AdminHandler{adminSvc: adminSvc, authSvc: authSvc, chapterSvc: chapterSvc, seriesSvc: seriesSvc}
 }
 
 func (h *AdminHandler) RegisterRoutes(r chi.Router) {
 	r.Route("/admin", func(r chi.Router) {
 		r.Use(h.requireStaffMiddleware)
 		r.Get("/series", h.listSeries)
+		r.Post("/series", h.createSeries)
+		r.Patch("/series/{id}", h.updateSeries)
+		r.Delete("/series/{id}", h.deleteSeries)
 		r.Get("/users", h.listUsers)
 		r.Patch("/users/{id}", h.updateUser)
 		r.Get("/chapters", h.listChapters)
+		r.Post("/chapters", h.createChapter)
 		r.Patch("/chapters/{id}", h.updateChapter)
+		r.Delete("/chapters/{id}", h.deleteChapter)
 	})
 }
 
@@ -125,5 +130,75 @@ func (h *AdminHandler) listChapters(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, list)
 }
 
-// ensure strconv is imported even if not directly used in this file after refactor
-var _ = strconv.Itoa
+func (h *AdminHandler) createChapter(w http.ResponseWriter, r *http.Request) {
+	var in services.CreateChapterInput
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		http.Error(w, "body invalido", http.StatusBadRequest)
+		return
+	}
+	ch, err := h.chapterSvc.Create(r.Context(), in)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, http.StatusCreated, ch)
+}
+
+func (h *AdminHandler) deleteChapter(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		http.Error(w, "chapter_id invalido", http.StatusBadRequest)
+		return
+	}
+	if err := h.chapterSvc.Delete(r.Context(), id); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *AdminHandler) createSeries(w http.ResponseWriter, r *http.Request) {
+	var in services.CreateSeriesInput
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		http.Error(w, "body invalido", http.StatusBadRequest)
+		return
+	}
+	s, err := h.seriesSvc.Create(r.Context(), in)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, http.StatusCreated, s)
+}
+
+func (h *AdminHandler) updateSeries(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		http.Error(w, "series_id invalido", http.StatusBadRequest)
+		return
+	}
+	var in services.UpdateSeriesInput
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		http.Error(w, "body invalido", http.StatusBadRequest)
+		return
+	}
+	s, err := h.seriesSvc.Update(r.Context(), id, in)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, http.StatusOK, s)
+}
+
+func (h *AdminHandler) deleteSeries(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		http.Error(w, "series_id invalido", http.StatusBadRequest)
+		return
+	}
+	if err := h.seriesSvc.Delete(r.Context(), id); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}

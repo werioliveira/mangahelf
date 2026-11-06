@@ -1,18 +1,18 @@
-# Changelog — MangaShelf
+# Changelog â€” MangaShelf
 
-## 0.2.0 — 2026-11-05 · Auth & AuthZ Backend
+## 0.2.0 â€” 2026-11-05 Â· Auth & AuthZ Backend
 ### Adicionado
-- internal/auth: sistema completo de autenticação
-  - Hash Argon2id com semáforo de concorrência, política de senhas, NFKC normalization
-  - Sessões SCS com store hashed (SHA256), cookie __Host-/ms_session httpOnly, SameSite=Lax, idle/absolute TTL, revogação
-  - CSRF: Fetch Metadata + Origin allowlist + token por sessão (X-CSRF-Token)
+- internal/auth: sistema completo de autenticaÃ§Ã£o
+  - Hash Argon2id com semÃ¡foro de concorrÃªncia, polÃ­tica de senhas, NFKC normalization
+  - SessÃµes SCS com store hashed (SHA256), cookie __Host-/ms_session httpOnly, SameSite=Lax, idle/absolute TTL, revogaÃ§Ã£o
+  - CSRF: Fetch Metadata + Origin allowlist + token por sessÃ£o (X-CSRF-Token)
   - Rate limiting com backoff progressivo, HMAC email hash
-  - One-time tokens (verify_email/reset/change_email) com consumo atômico
+  - One-time tokens (verify_email/reset/change_email) com consumo atÃ´mico
   - MFA TOTP (AES-256-GCM), recovery codes HMAC-SHA256
   - WebAuthn/Passkeys (discoverable, sign count, clone detection)
   - Flows completos de auth (register/login/logout/forgot/reset/change/verify/reauth)
-  - Auditoria append-only com trigger imutável
-- internal/authz: autorização deny-by-default, resolver com deny vence allow, anti-escalação por posição, policy router com checagem em CI
+  - Auditoria append-only com trigger imutÃ¡vel
+- internal/authz: autorizaÃ§Ã£o deny-by-default, resolver com deny vence allow, anti-escalaÃ§Ã£o por posiÃ§Ã£o, policy router com checagem em CI
 - internal/audit: logging estruturado
 - Schema auth (0009): users, sessions, user_sessions, auth_tokens, TOTP, recovery codes, WebAuthn, permissions/roles/role_permissions/user_roles/group_members/user_overrides, bans, audit_log
 - Novas rotas auth/OIDC integradas
@@ -23,43 +23,42 @@
 - internal/adapters/httpapi/middleware/auth.go
 
 ### Atualizado
-- go.mod/go.sum com novas dependências
-- cmd/api/main.go: sessões SCS, CORS com OPTIONS, registro de rotas auth/admin/settings/vip/reader/catalog/media
-- internal/services/auth_service.go: novo serviço integrado com SCS
+- go.mod/go.sum com novas dependÃªncias
+- cmd/api/main.go: sessÃµes SCS, CORS com OPTIONS, registro de rotas auth/admin/settings/vip/reader/catalog/media
+- internal/services/auth_service.go: novo serviÃ§o integrado com SCS
 - internal/adapters/httpapi/*: handlers atualizados
-- deploy/.env.example: variáveis auth
+- deploy/.env.example: variÃ¡veis auth
 
 ### Validado
 - go build ./... verde
 - go test ./... verde
 
-## 0.1.0 — 2026-11-04 · Fundação, Catálogo, Upload, Leitor, VIP, Admin v1
+## 0.1.0 â€” 2026-11-04 Â· FundaÃ§Ã£o, CatÃ¡logo, Upload, Leitor, VIP, Admin v1
 
-### Fundação
+### FundaÃ§Ã£o
 - Monorepo: /cmd/api, /cmd/worker, /internal, /apps/web, /migrations, /api, /deploy, /docs
 - Config/ports/adapters base
 - Migrations 0001-0008 iniciais
-- Docker Compose perfis, Caddyfile com headers de segurança, OpenAPI, CI básico
+- Docker Compose perfis, Caddyfile com headers de seguranÃ§a, OpenAPI, CI bÃ¡sico
 
-### Autenticação/Catálogo (MVP)
-- Auth com argon2id, sessões cookie httpOnly
-- CRUD séries/capítulos
+### AutenticaÃ§Ã£o/CatÃ¡logo (MVP)
+- Auth com argon2id, sessÃµes cookie httpOnly
+- CRUD sÃ©ries/capÃ­tulos
 - Rotas auth/catalog
 
 ### Storage & Upload
-- S3-compatível primário, worker processa ZIP, publicação automática
+- S3-compatÃ­vel primÃ¡rio, worker processa ZIP, publicaÃ§Ã£o automÃ¡tica
 - ImageURLBuilder imgproxy/static
 
 ### Leitor
-- Páginas por capítulo com AccessResolver único
+- PÃ¡ginas por capÃ­tulo com AccessResolver Ãºnico
 - Rotas leitor/lookup
 
 ### VIP
-- Planos, vouchers, concessão, status
+- Planos, vouchers, concessÃ£o, status
 
 ### Painel Admin v1
 - Rotas /admin/* protegidas por staff
 
 ### Frontend
 - Next.js 15 App Router
-

@@ -1,5 +1,5 @@
 -- Migration: 0001_core
--- Schema inicial coerente com o cÛdigo atual
+-- Schema inicial coerente com o c√≥digo atual
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS citext;
@@ -14,7 +14,7 @@ CREATE TABLE groups (
     created_at  timestamptz NOT NULL DEFAULT now()
 );
 
--- Usu·rios
+-- Usu√°rios
 CREATE TABLE users (
     id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     email             citext NOT NULL UNIQUE,
@@ -32,7 +32,7 @@ CREATE TABLE users (
     updated_at        timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_users_oauth_provider_id ON users(oauth_provider, oauth_provider_id);
-
+
 
 -- Identidades externas
 CREATE TABLE external_identities (
@@ -43,7 +43,7 @@ CREATE TABLE external_identities (
     PRIMARY KEY (provider, subject)
 );
 
--- Sessıes
+-- Sess√µes
 CREATE TABLE sessions (
     token  text PRIMARY KEY,
     data   bytea NOT NULL,
@@ -64,7 +64,7 @@ CREATE TABLE user_sessions (
     revoked_reason text
 );
 CREATE INDEX user_sessions_user_idx ON user_sessions (user_id) WHERE revoked_at IS NULL;
-
+
 
 -- Tokens
 CREATE TABLE auth_tokens (
@@ -148,9 +148,9 @@ CREATE TABLE user_overrides (
     expires_at     timestamptz,
     PRIMARY KEY (user_id, permission_key, scope_group_id)
 );
+
 
-
--- SÈries/Cat·logo
+-- S√©ries/Cat√°logo
 CREATE TABLE series (
     id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     title             text NOT NULL,
@@ -215,9 +215,9 @@ CREATE TABLE series_alt_titles (
     UNIQUE (series_id, title)
 );
 CREATE INDEX idx_alt_titles_series ON series_alt_titles(series_id);
+
 
-
--- CapÌtulos
+-- Cap√≠tulos
 CREATE TABLE chapters (
     id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     series_id        uuid NOT NULL REFERENCES series(id) ON DELETE CASCADE,
@@ -235,7 +235,7 @@ CREATE TABLE chapters (
 CREATE INDEX idx_chapters_series_state ON chapters(series_id, state);
 CREATE INDEX idx_chapters_public_at ON chapters(public_at);
 
--- P·ginas
+-- P√°ginas
 CREATE TABLE pages (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     chapter_id  uuid NOT NULL REFERENCES chapters(id) ON DELETE CASCADE,
@@ -282,7 +282,7 @@ CREATE INDEX idx_media_uploads_kind ON media_uploads(kind);
 CREATE INDEX idx_media_uploads_status ON media_uploads(status);
 
 ALTER TABLE chapters ADD CONSTRAINT fk_chapters_source_upload FOREIGN KEY (source_upload_id) REFERENCES media_uploads(id) ON DELETE SET NULL;
-
+
 
  - -   D e f a u l t s 
  I N S E R T   I N T O   s e t t i n g s   ( k e y ,   v a l u e ,   t y p e ,   s e t t i n g _ g r o u p )   V A L U E S 
@@ -296,9 +296,9 @@ ALTER TABLE chapters ADD CONSTRAINT fk_chapters_source_upload FOREIGN KEY (sourc
  m e l h o r  
  p l a t a f o r m a  
  d e  
- m a n g · s  
+ m a n g √° s  
  e m  
- p o r t u g u Í s \ ' ,   ' s t r i n g ' ,   ' s i t e ' ) 
+ p o r t u g u √™ s \ ' ,   ' s t r i n g ' ,   ' s i t e ' ) 
  O N   C O N F L I C T   ( k e y )   D O   N O T H I N G ; 
  
  D R O P   V I E W   I F   E X I S T S   v _ s e r i e s _ a d m i n ; 
