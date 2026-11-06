@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, ArrowRight, UserPlus, Github, Google } from "lucide/react";
+import { Mail, Lock, ArrowRight, UserPlus, Github, Chrome } from "lucide-react";
 import { btnPrimary, btnOutline } from "@/lib/ui";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
@@ -40,7 +40,7 @@ export default function RegisterPage() {
         throw new Error(errorData.message || "Erro ao criar conta");
       }
 
-      const next = window.location.searchParams.get("next") || "/";
+      const next = new URLSearchParams(window.location.search).get("next") || "/";
       router.push(next);
       router.refresh();
     } catch (err: any) {
@@ -51,7 +51,7 @@ export default function RegisterPage() {
   };
 
   const handleOIDCRegister = (provider: string) => {
-    window.location.href = `${API_URL}/auth/oidc/${provider}?next=${encodeURIComponent(window.location.searchParams.get("next") || "/")}`;
+    window.location.href = `${API_URL}/auth/oidc/${provider}?next=${encodeURIComponent(new URLSearchParams(window.location.search).get("next") || "/")}`;
   };
 
   return (
@@ -165,7 +165,7 @@ export default function RegisterPage() {
               onClick={() => handleOIDCRegister("google")}
               className="flex items-center justify-center gap-2 w-full py-3 px-4 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
             >
-              <Google className="w-4 h-4" />
+              <Chrome className="w-4 h-4" />
               Google
             </button>
             <button

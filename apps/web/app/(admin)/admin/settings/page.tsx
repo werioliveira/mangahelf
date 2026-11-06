@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   API_URL, Badge, Btn, Empty, Field, Icon, Modal, PageHeader, Panel, SearchBox, Spinner, Th,
@@ -99,7 +100,7 @@ async function updateSetting(key: string, value: unknown, type: string, group: G
   return res.json();
 }
 
-export default function SettingsPage() {
+function SettingsPageInner() {
   const searchParams = useSearchParams();
   const urlGroup = searchParams.get("group") as Group | null;
   const [activeGroup, setActiveGroup] = useState<Group>(urlGroup ?? "site");
@@ -280,4 +281,12 @@ function useSettings(group: Group) {
 
 function GroupIcon({ groupKey }: { groupKey: Group }) {
   return GROUP_ICONS[groupKey];
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <SettingsPageInner />
+    </Suspense>
+  );
 }
