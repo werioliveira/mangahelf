@@ -18,8 +18,8 @@ func NewMediaHandler(mediaSvc *services.MediaService, authSvc *services.AuthServ
 }
 
 func (h *MediaHandler) RegisterRoutes(r chi.Router) {
-	r.Post("/uploads/presign", h.presignUpload)
-	r.Post("/uploads", h.createUpload)
+	r.Post("/admin/uploads/presign", h.presignUpload)
+	r.Post("/admin/uploads", h.createUpload)
 }
 
 func (h *MediaHandler) requireAuth(w http.ResponseWriter, r *http.Request) (string, bool) {

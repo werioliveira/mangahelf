@@ -121,8 +121,8 @@ func (s *AuthService) Register(ctx context.Context, email, name, password string
 
 	var id string
 	err = s.db.QueryRowContext(ctx,
-		`INSERT INTO users (email, name, password_hash, is_active, email_verified)
-		 VALUES ($1, $2, $3, true, false)
+		`INSERT INTO users (email, name, password_hash, status, email_verified_at)
+		 VALUES ($1, $2, $3, 'active', NULL)
 		 RETURNING id`,
 		email, name, passwordHash,
 	).Scan(&id)
@@ -175,17 +175,16 @@ func (s *AuthService) GetUserByEmail(ctx context.Context, email string) (*ports.
 	var u ports.User
 	var name sql.NullString
 	var passwordHash sql.NullString
-	var roles sql.NullString
-	var groups sql.NullString
+	var status string
 
 	err := s.db.QueryRowContext(ctx,
-		`SELECT id, email, name, password_hash, is_active, email_verified, oauth_provider,
-		 oauth_provider_id, roles, groups, created_at, updated_at, last_login_at,
+		`SELECT id, email, username, password_hash, status, oauth_provider,
+		 oauth_provider_id, created_at, updated_at, last_login_at,
 		 failed_login_attempts, locked_until
 		 FROM users WHERE email = $1`,
 		email,
-	).Scan(&u.ID, &u.Email, &name, &passwordHash, &u.IsActive, &u.EmailVerified,
-		&u.OAuthProvider, &u.OAuthProviderID, &u.Roles, &u.Groups, &u.CreatedAt, &u.UpdatedAt,
+	).Scan(&u.ID, &u.Email, &name, &passwordHash, &status, &u.OAuthProvider,
+		&u.OAuthProviderID, &u.CreatedAt, &u.UpdatedAt,
 		&u.LastLoginAt, &u.FailedLoginAttempts, &u.LockedUntil)
 
 	if err != nil {
@@ -201,12 +200,7 @@ func (s *AuthService) GetUserByEmail(ctx context.Context, email string) (*ports.
 	if passwordHash.Valid {
 		u.PasswordHash = passwordHash.String
 	}
-	if roles.Valid {
-		u.Roles = []string{roles.String}
-	}
-	if groups.Valid {
-		u.Groups = []string{groups.String}
-	}
+	u.IsActive = (status == "active")
 
 	return &u, nil
 }
@@ -297,8 +291,8 @@ func subtleConstantTimeCompare(a, b []byte) bool {
 func (s *AuthService) CreateOIDCUser(ctx context.Context, email, name, provider, providerID string) (string, error) {
 	var id string
 	err := s.db.QueryRowContext(ctx,
-		`INSERT INTO users (email, name, oauth_provider, oauth_provider_id, is_active, email_verified)
-		 VALUES ($1, $2, $3, $4, true, true)
+		`INSERT INTO users (email, name, oauth_provider, oauth_provider_id, status, email_verified_at)
+		 VALUES ($1, $2, $3, $4, 'active', now())
 		 RETURNING id`,
 		email, name, provider, providerID,
 	).Scan(&id)

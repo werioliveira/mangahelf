@@ -24,10 +24,11 @@ type MediaService struct {
 }
 
 type PresignUploadInput struct {
-	SeriesID    string `json:"series_id"`
-	ChapterNumber int  `json:"chapter_number"`
-	Filename    string `json:"filename"`
-	ContentType string `json:"content_type"`
+	SeriesID      string `json:"series_id"`
+	ChapterNumber int    `json:"chapter_number"`
+	Filename      string `json:"filename"`
+	ContentType   string `json:"content_type"`
+	Kind          string `json:"kind"` // "cover", "chapter_source", etc.
 }
 
 type PresignUploadOutput struct {
@@ -35,6 +36,7 @@ type PresignUploadOutput struct {
 	StorageKey  string `json:"storage_key"`
 	Method      string `json:"method"` // "PUT"
 	ExpiresIn   int    `json:"expires_in"` // seconds
+	PublicURL   string `json:"public_url,omitempty"`
 }
 
 type CreateUploadInput struct {
@@ -66,11 +68,13 @@ func (m *MediaService) PresignUpload(ctx context.Context, userID string, in Pres
 	if userID == "" {
 		return PresignUploadOutput{}, errors.New("usuario nao autenticado")
 	}
-	if in.SeriesID == "" {
-		return PresignUploadOutput{}, errors.New("series_id e obrigatorio")
-	}
-	if in.ChapterNumber <= 0 {
-		return PresignUploadOutput{}, errors.New("chapter_number deve ser maior que zero")
+	if in.Kind != "cover" && in.Kind != "cover_source" {
+		if in.SeriesID == "" {
+			return PresignUploadOutput{}, errors.New("series_id e obrigatorio")
+		}
+		if in.ChapterNumber <= 0 {
+			return PresignUploadOutput{}, errors.New("chapter_number deve ser maior que zero")
+		}
 	}
 	if in.Filename == "" {
 		return PresignUploadOutput{}, errors.New("filename e obrigatorio")
@@ -84,10 +88,30 @@ func (m *MediaService) PresignUpload(ctx context.Context, userID string, in Pres
 		}
 	}
 
-	key := m.contentKey(in.Filename)
+	// generate storage key based on kind
+	var key string
+	if in.Kind == "cover" {
+		buf := make([]byte, 16)
+		rand.Read(buf)
+		ext := filepath.Ext(in.Filename)
+		key = fmt.Sprintf("covers/%s%s", hex.EncodeToString(buf), ext)
+	} else {
+		key = m.contentKey(in.Filename)
+	}
+
 	url, err := m.storage.Presign(ctx, key, ports.OpPut, uploadTTL)
 	if err != nil {
 		return PresignUploadOutput{}, fmt.Errorf("gerar presign: %w", err)
+	}
+
+	// generate public URL for the uploaded file
+	publicURL := ""
+	base := strings.TrimRight(m.cfg.S3Endpoint, "/")
+	if m.cfg.ImagePipeline == "imgproxy" {
+		// imgproxy fetches from S3 (SeaweedFS) with configured credentials and transforms
+		publicURL = fmt.Sprintf("%s/insecure/plain/s3://%s/%s", strings.TrimRight(m.cfg.ImgproxyBaseURL, "/"), m.cfg.S3Bucket, key)
+	} else {
+		publicURL = fmt.Sprintf("%s/%s/%s", base, m.cfg.S3Bucket, key)
 	}
 
 	return PresignUploadOutput{
@@ -95,6 +119,7 @@ func (m *MediaService) PresignUpload(ctx context.Context, userID string, in Pres
 		StorageKey:  key,
 		Method:      "PUT",
 		ExpiresIn:   int(uploadTTL.Seconds()),
+		PublicURL:   publicURL,
 	}, nil
 }
 

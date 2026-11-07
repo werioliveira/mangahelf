@@ -32,7 +32,8 @@ CREATE TABLE users (
     updated_at        timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_users_oauth_provider_id ON users(oauth_provider, oauth_provider_id);
-
+
+
 
 -- Identidades externas
 CREATE TABLE external_identities (
@@ -64,7 +65,8 @@ CREATE TABLE user_sessions (
     revoked_reason text
 );
 CREATE INDEX user_sessions_user_idx ON user_sessions (user_id) WHERE revoked_at IS NULL;
-
+
+
 
 -- Tokens
 CREATE TABLE auth_tokens (
@@ -148,7 +150,8 @@ CREATE TABLE user_overrides (
     expires_at     timestamptz,
     PRIMARY KEY (user_id, permission_key, scope_group_id)
 );
-
+
+
 
 -- Séries/Catálogo
 CREATE TABLE series (
@@ -215,7 +218,8 @@ CREATE TABLE series_alt_titles (
     UNIQUE (series_id, title)
 );
 CREATE INDEX idx_alt_titles_series ON series_alt_titles(series_id);
-
+
+
 
 -- Capítulos
 CREATE TABLE chapters (
@@ -282,33 +286,151 @@ CREATE INDEX idx_media_uploads_kind ON media_uploads(kind);
 CREATE INDEX idx_media_uploads_status ON media_uploads(status);
 
 ALTER TABLE chapters ADD CONSTRAINT fk_chapters_source_upload FOREIGN KEY (source_upload_id) REFERENCES media_uploads(id) ON DELETE SET NULL;
-
 
- - -   D e f a u l t s 
- I N S E R T   I N T O   s e t t i n g s   ( k e y ,   v a l u e ,   t y p e ,   s e t t i n g _ g r o u p )   V A L U E S 
-         ( ' a p p _ n a m e ' ,   ' \  
- M a n g a S h e l f \ ' ,   ' s t r i n g ' ,   ' s i t e ' ) , 
-         ( ' s e a r c h _ e n g i n e ' ,   ' \ p o s t g r e s \ ' ,   ' s t r i n g ' ,   ' s e a r c h ' ) , 
-         ( ' u i _ p r i m a r y _ c o l o r ' ,   ' \ # 3 b 8 2 f 6 \ ' ,   ' c o l o r ' ,   ' u i ' ) , 
-         ( ' u i _ s e c o n d a r y _ c o l o r ' ,   ' \ # 1 e 2 9 3 b \ ' ,   ' c o l o r ' ,   ' u i ' ) , 
-         ( ' u i _ a c c e n t _ c o l o r ' ,   ' \ # f 5 9 e 0 b \ ' ,   ' c o l o r ' ,   ' u i ' ) , 
-         ( ' s i t e _ d e s c r i p t i o n ' ,   ' \ A  
- m e l h o r  
- p l a t a f o r m a  
- d e  
- m a n g á s  
- e m  
- p o r t u g u ê s \ ' ,   ' s t r i n g ' ,   ' s i t e ' ) 
- O N   C O N F L I C T   ( k e y )   D O   N O T H I N G ; 
- 
- D R O P   V I E W   I F   E X I S T S   v _ s e r i e s _ a d m i n ; 
- C R E A T E   V I E W   v _ s e r i e s _ a d m i n   A S 
- S E L E C T   s . i d , s . t i t l e , s . s l u g , s . s y n o p s i s , s . t y p e , s . s t a t u s , s . d e m o g r a p h y , s . o r i g i n a l _ l a n g u a g e , s . r e l e a s e _ y e a r , s . a c c e s s , s . p u b l i c a t i o n _ s t a t u s , s . p u b l i s h e d _ a t , s . p u b l i c _ a t , s . c o v e r _ s t o r a g e _ k e y , s . g r o u p _ i d , s . c r e a t e d _ b y , s . c r e a t e d _ a t , s . u p d a t e d _ a t , 
- C O A L E S C E ( ( S E L E C T   j s o n b _ a g g ( j s o n b _ b u i l d _ o b j e c t ( ' i d ' , a . i d , ' n a m e ' , a . n a m e , ' r o l e ' , s a . r o l e )   O R D E R   B Y   s a . s o r t _ o r d e r )   F R O M   s e r i e s _ a u t h o r s   s a   J O I N   a u t h o r s   a   O N   a . i d = s a . a u t h o r _ i d   W H E R E   s a . s e r i e s _ i d = s . i d ) , ' [ ] ' : : j s o n b )   A S   a u t h o r s , 
- C O A L E S C E ( ( S E L E C T   j s o n b _ a g g ( j s o n b _ b u i l d _ o b j e c t ( ' i d ' , t . i d , ' n a m e ' , t . n a m e )   O R D E R   B Y   s t . s o r t _ o r d e r )   F R O M   s e r i e s _ t a g s   s t   J O I N   t a g s   t   O N   t . i d = s t . t a g _ i d   W H E R E   s t . s e r i e s _ i d = s . i d ) , ' [ ] ' : : j s o n b )   A S   t a g s , 
- C O A L E S C E ( ( S E L E C T   j s o n b _ a g g ( j s o n b _ b u i l d _ o b j e c t ( ' t i t l e ' , s a t . t i t l e )   O R D E R   B Y   s a t . s o r t _ o r d e r )   F R O M   s e r i e s _ a l t _ t i t l e s   s a t   W H E R E   s a t . s e r i e s _ i d = s . i d ) , ' [ ] ' : : j s o n b )   A S   a l t _ t i t l e s , 
- C O U N T ( c . i d ) : : i n t   A S   t o t a l _ c h a p t e r _ c o u n t , 
- C O U N T ( c . i d )   F I L T E R   ( W H E R E   c . s t a t e = ' p u b l i s h e d ' ) : : i n t   A S   p u b l i s h e d _ c h a p t e r _ c o u n t 
- F R O M   s e r i e s   s   L E F T   J O I N   c h a p t e r s   c   O N   c . s e r i e s _ i d = s . i d   G R O U P   B Y   s . i d ; 
-  
- 
+
+-- VIP
+CREATE TABLE vip_plans (
+    id        uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    name      text NOT NULL,
+    duration  interval NOT NULL,
+    duration_days int,
+    perks     jsonb NOT NULL DEFAULT '{}'::jsonb,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE vip_memberships (
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    plan_id     uuid NOT NULL REFERENCES vip_plans(id) ON DELETE CASCADE,
+    starts_at   timestamptz NOT NULL DEFAULT now(),
+    expires_at  timestamptz NOT NULL,
+    source      text NOT NULL DEFAULT 'admin' CHECK (source IN ('admin','voucher','payment')),
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_vip_memberships_user_expires ON vip_memberships(user_id, expires_at);
+CREATE TABLE vip_vouchers (
+    code_hash  text PRIMARY KEY,
+    plan_id    uuid NOT NULL REFERENCES vip_plans(id) ON DELETE CASCADE,
+    max_uses   int NOT NULL DEFAULT 1,
+    used_count int NOT NULL DEFAULT 0,
+    expires_at timestamptz,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Auditoria
+CREATE TABLE audit_log (
+    id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    actor_id   uuid REFERENCES users(id) ON DELETE SET NULL,
+    action     text NOT NULL,
+    target     text NOT NULL,
+    target_id  uuid,
+    target_type text,
+    before     jsonb,
+    after      jsonb,
+    ip         text,
+    user_agent text,
+    request_id text,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_audit_log_actor_created ON audit_log(actor_id, created_at);
+CREATE INDEX idx_audit_log_target ON audit_log(target, target_id);
+
+-- Bans
+CREATE TABLE bans (
+    id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    reason     text NOT NULL,
+    banned_by  uuid REFERENCES users(id),
+    banned_at  timestamptz NOT NULL DEFAULT now(),
+    expires_at timestamptz,
+    revoked_at timestamptz
+);
+
+-- Configuracoes
+CREATE TABLE settings (
+    key           text PRIMARY KEY,
+    value         jsonb NOT NULL DEFAULT '{}'::jsonb,
+    type          text NOT NULL DEFAULT 'string' CHECK (type IN ('string','boolean','color','json')),
+    setting_group text NOT NULL DEFAULT 'site' CHECK (setting_group IN ('site','search','ui','internal')),
+    updated_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_settings_group ON settings(setting_group);
+
+-- Defaults
+INSERT INTO settings (key, value, type, setting_group) VALUES
+    ('app_name', '"MangaShelf"', 'string', 'site'),
+    ('search_engine', '"postgres"', 'string', 'search'),
+    ('ui_primary_color', '"#3b82f6"', 'color', 'ui'),
+    ('ui_secondary_color', '"#1e293b"', 'color', 'ui'),
+    ('ui_accent_color', '"#f59e0b"', 'color', 'ui'),
+    ('site_description', '"A melhor plataforma de mangas em portugues"', 'string', 'site')
+ON CONFLICT (key) DO NOTHING;
+
+-- Seed: roles padrao
+INSERT INTO roles (name, position, system) VALUES ('admin', 1, true) ON CONFLICT (name) DO NOTHING;
+INSERT INTO roles (name, position, system) VALUES ('editor', 2, false) ON CONFLICT (name) DO NOTHING;
+INSERT INTO roles (name, position, system) VALUES ('moderator', 3, false) ON CONFLICT (name) DO NOTHING;
+INSERT INTO roles (name, position, system) VALUES ('user', 4, false) ON CONFLICT (name) DO NOTHING;
+
+-- Seed: permissions padrao
+INSERT INTO permissions (key, desc_text, scopes, requires_mfa) VALUES ('series.manage', 'Criar, editar e excluir series', ARRAY['global','group'], false) ON CONFLICT (key) DO NOTHING;
+INSERT INTO permissions (key, desc_text, scopes, requires_mfa) VALUES ('series.view', 'Visualizar series', ARRAY['global','group'], false) ON CONFLICT (key) DO NOTHING;
+INSERT INTO permissions (key, desc_text, scopes, requires_mfa) VALUES ('chapters.manage', 'Criar, editar e excluir capitulos', ARRAY['global','group'], false) ON CONFLICT (key) DO NOTHING;
+INSERT INTO permissions (key, desc_text, scopes, requires_mfa) VALUES ('chapters.publish', 'Publicar capitulos', ARRAY['global','group'], false) ON CONFLICT (key) DO NOTHING;
+INSERT INTO permissions (key, desc_text, scopes, requires_mfa) VALUES ('chapters.view', 'Visualizar capitulos', ARRAY['global','group'], false) ON CONFLICT (key) DO NOTHING;
+INSERT INTO permissions (key, desc_text, scopes, requires_mfa) VALUES ('users.manage', 'Criar, editar e excluir usuarios', ARRAY['global'], true) ON CONFLICT (key) DO NOTHING;
+INSERT INTO permissions (key, desc_text, scopes, requires_mfa) VALUES ('users.view', 'Visualizar usuarios', ARRAY['global'], false) ON CONFLICT (key) DO NOTHING;
+INSERT INTO permissions (key, desc_text, scopes, requires_mfa) VALUES ('vip.manage', 'Gerenciar assinaturas VIP', ARRAY['global'], true) ON CONFLICT (key) DO NOTHING;
+INSERT INTO permissions (key, desc_text, scopes, requires_mfa) VALUES ('vip.view', 'Visualizar assinaturas VIP', ARRAY['global'], false) ON CONFLICT (key) DO NOTHING;
+INSERT INTO permissions (key, desc_text, scopes, requires_mfa) VALUES ('settings.manage', 'Gerenciar configuracoes do sistema', ARRAY['global'], true) ON CONFLICT (key) DO NOTHING;
+INSERT INTO permissions (key, desc_text, scopes, requires_mfa) VALUES ('settings.view', 'Visualizar configuracoes do sistema', ARRAY['global'], false) ON CONFLICT (key) DO NOTHING;
+INSERT INTO permissions (key, desc_text, scopes, requires_mfa) VALUES ('search.manage', 'Gerenciar configuracoes de busca', ARRAY['global'], false) ON CONFLICT (key) DO NOTHING;
+INSERT INTO permissions (key, desc_text, scopes, requires_mfa) VALUES ('search.view', 'Visualizar configuracoes de busca', ARRAY['global'], false) ON CONFLICT (key) DO NOTHING;
+INSERT INTO permissions (key, desc_text, scopes, requires_mfa) VALUES ('admin.access', 'Acesso completo ao painel admin', ARRAY['global'], true) ON CONFLICT (key) DO NOTHING;
+INSERT INTO permissions (key, desc_text, scopes, requires_mfa) VALUES ('media.upload', 'Fazer upload de midia', ARRAY['global','group'], false) ON CONFLICT (key) DO NOTHING;
+INSERT INTO permissions (key, desc_text, scopes, requires_mfa) VALUES ('media.manage', 'Gerenciar midia existente', ARRAY['global','group'], false) ON CONFLICT (key) DO NOTHING;
+INSERT INTO permissions (key, desc_text, scopes, requires_mfa) VALUES ('report.handle', 'Moderar conteudo reportado', ARRAY['global','group'], false) ON CONFLICT (key) DO NOTHING;
+
+-- Seed: role_permissions (admin gets all)
+INSERT INTO role_permissions (role_id, permission_key)
+SELECT r.id, p.key FROM roles r CROSS JOIN permissions p
+WHERE r.name = 'admin'
+ON CONFLICT (role_id, permission_key) DO NOTHING;
+
+-- Seed: role_permissions (editor)
+INSERT INTO role_permissions (role_id, permission_key)
+SELECT r.id, p.key FROM roles r, permissions p
+WHERE r.name = 'editor' AND p.key IN ('series.manage','series.view','chapters.manage','chapters.publish','chapters.view','media.upload','media.manage')
+ON CONFLICT (role_id, permission_key) DO NOTHING;
+
+-- Seed: role_permissions (moderator)
+INSERT INTO role_permissions (role_id, permission_key)
+SELECT r.id, p.key FROM roles r, permissions p
+WHERE r.name = 'moderator' AND p.key IN ('chapters.manage','chapters.publish','chapters.view','vip.manage','vip.view','media.upload','media.manage')
+ON CONFLICT (role_id, permission_key) DO NOTHING;
+
+-- Seed: role_permissions (user)
+INSERT INTO role_permissions (role_id, permission_key)
+SELECT r.id, p.key FROM roles r, permissions p
+WHERE r.name = 'user' AND p.key IN ('series.view','chapters.view','vip.view','search.view')
+ON CONFLICT (role_id, permission_key) DO NOTHING;
+
+-- Admin user (password: admin123)
+INSERT INTO users (email, username, name, password_hash, status) VALUES
+    ('admin@mangashelf.local', 'admin', 'Administrador', '$argon2id$v=19$m=32768,t=3,p=4$o8HMQkx420H4rpNPT5YPtA$GyAKTAH9tbvjzuIbbnczyc8QK4txMhCBMXb5NpupTnc', 'active')
+ON CONFLICT (email) DO NOTHING;
+
+-- Assign admin role to admin user
+INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id FROM users u, roles r
+WHERE u.email = 'admin@mangashelf.local' AND r.name = 'admin'
+ON CONFLICT (user_id, role_id) DO NOTHING;
+
+DROP VIEW IF EXISTS v_series_admin;
+CREATE VIEW v_series_admin AS
+SELECT s.id,s.title,s.slug,s.synopsis,s.type,s.status,s.demography,s.original_language,s.release_year,s.access,s.publication_status,s.published_at,s.public_at,s.cover_storage_key,s.group_id,s.created_by,s.created_at,s.updated_at,
+COALESCE((SELECT jsonb_agg(jsonb_build_object('id',a.id,'name',a.name,'role',sa.role) ORDER BY sa.sort_order) FROM series_authors sa JOIN authors a ON a.id=sa.author_id WHERE sa.series_id=s.id),'[]'::jsonb) AS authors,
+COALESCE((SELECT jsonb_agg(jsonb_build_object('id',t.id,'name',t.name) ORDER BY st.sort_order) FROM series_tags st JOIN tags t ON t.id=st.tag_id WHERE st.series_id=s.id),'[]'::jsonb) AS tags,
+COALESCE((SELECT jsonb_agg(jsonb_build_object('title',sat.title) ORDER BY sat.sort_order) FROM series_alt_titles sat WHERE sat.series_id=s.id),'[]'::jsonb) AS alt_titles,
+COUNT(c.id)::int AS total_chapter_count,
+COUNT(c.id) FILTER (WHERE c.state='published')::int AS published_chapter_count
+FROM series s LEFT JOIN chapters c ON c.series_id=s.id GROUP BY s.id;

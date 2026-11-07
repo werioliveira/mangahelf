@@ -32,16 +32,13 @@ services:
       IMGPROXY_USE_ETAG: "true"
       IMGPROXY_SEND_CORS_HEADER: "true"
 
-  # Storage S3-compatível (desenvolvimento local). Em produção use R2, B2, Garage ou SeaweedFS.
-  minio:
-    image: bitnami/minio:2024
+  # Storage S3-compatível (SeaweedFS). Em produção use R2, B2, Garage ou SeaweedFS.
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
     profiles: ["s3"]
-    ports: ["9000:9000"]
-    environment:
-      MINIO_ROOT_USER: mangashelf
-      MINIO_ROOT_PASSWORD: mangashelf123
-    command: server /data --console-address ":9001"
-    volumes: ["minio_data:/data"]
+    ports: ["9000:8333", "8081:8080"]
+    command: "server -s3 -s3.port=8333 -cors.allowed-origins=http://localhost:3000"
+    volumes: ["seaweed_data:/data"]
 
   api:
     build:
@@ -86,4 +83,4 @@ services:
 volumes:
   pgdata:
   meilisearch_data:
-  minio_data:
+  seaweed_data:

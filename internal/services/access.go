@@ -80,10 +80,10 @@ func (r *AccessResolver) isStaffOrEditor(ctx context.Context, userID string, gro
 	var exists bool
 	err := r.db.QueryRowContext(ctx,
 		`SELECT EXISTS(
-		 SELECT 1 FROM user_roles ur
-		 JOIN role_permissions rp ON rp.role_id = ur.role_id
-		 JOIN group_members gm ON gm.user_id = ur.user_id AND gm.group_id = $2
-		 WHERE ur.user_id = $1
+		 SELECT 1 FROM group_members gm
+		 JOIN role_permissions rp ON rp.role_id = gm.role_id
+		 WHERE gm.user_id = $1
+		   AND gm.group_id = $2
 		   AND rp.permission_key IN ('chapter.publish','chapter.set_access','media.manage','report.handle')
 		)`,
 		userID, groupID,

@@ -19,6 +19,7 @@ export function CoverUploader({ coverUrl, onUploaded, onRemoved }: Props) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const validateFile = (file: File): string | null => {
     if (!ACCEPTED.includes(file.type)) return "Formato não suportado. Use JPG, PNG ou WebP.";
@@ -32,6 +33,10 @@ export function CoverUploader({ coverUrl, onUploaded, onRemoved }: Props) {
       toast.show(err, false);
       return;
     }
+
+    // Preview local imediato
+    const localPreview = URL.createObjectURL(file);
+    setPreviewUrl(localPreview);
 
     setUploading(true);
     setProgress(0);
@@ -74,6 +79,8 @@ export function CoverUploader({ coverUrl, onUploaded, onRemoved }: Props) {
     } finally {
       setUploading(false);
       setProgress(0);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
       if (inputRef.current) inputRef.current.value = "";
     }
   };
@@ -140,14 +147,24 @@ export function CoverUploader({ coverUrl, onUploaded, onRemoved }: Props) {
       }`}
     >
       {uploading ? (
-        <div className="space-y-3">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-indigo-300/30 border-t-indigo-300" />
-          <p className="text-sm text-slate-300">Enviando… {progress}%</p>
-          <div className="h-1.5 w-48 overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full bg-gradient-to-r from-indigo-500 to-sky-400 transition-[width] duration-200"
-              style={{ width: `${progress}%` }}
+        <div className="relative">
+          {previewUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={previewUrl}
+              alt="Prévia da capa"
+              className="h-40 w-[107px] rounded-lg border border-white/10 object-cover opacity-60"
             />
+          )}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-300/30 border-t-indigo-300" />
+            <p className="text-xs font-medium text-slate-200">{progress}%</p>
+            <div className="h-1.5 w-24 overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full bg-gradient-to-r from-indigo-500 to-sky-400 transition-[width] duration-200"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
         </div>
       ) : (

@@ -45,6 +45,8 @@ export default function ChaptersPage() {
   const [editState, setEditState] = useState("draft");
   const [editAccess, setEditAccess] = useState("public");
   const [saving, setSaving] = useState(false);
+  const [toDelete, setToDelete] = useState<Chapter | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
@@ -63,7 +65,7 @@ export default function ChaptersPage() {
         if (seriesRes.ok) {
           const seriesData = (await seriesRes.json()) as { id: string; title: string }[];
           const map = new Map<string, string>();
-          seriesData.forEach((s) => map.set(s.id, s.title));
+          (seriesData ?? []).forEach((s) => map.set(s.id, s.title));
           setSeriesMap(map);
         }
       } catch (e) {
@@ -119,7 +121,24 @@ export default function ChaptersPage() {
     }
   };
 
-  if (loading) return <Spinner label="Carregando capítulos…" />;
+  const remove = async () => {
+    if (!toDelete) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/chapters/${toDelete.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error((await res.text()) || "Erro ao excluir");
+      setChapters((p) => p.filter((c) => c.id !== toDelete.id));
+      toast.show("Capítulo excluído.");
+      setToDelete(null);
+    } catch (e) {
+      toast.show(errMsg(e, "Erro ao excluir capítulo"), false);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -188,13 +207,16 @@ export default function ChaptersPage() {
                       <td className="px-5 py-3.5"><Badge tone={st.tone}>{st.label}</Badge></td>
                       <td className="px-5 py-3.5"><Badge tone={ac.tone}>{ac.label}</Badge></td>
                       <td className="px-5 py-3.5 text-slate-500">{fmtDate(c.created_at)}</td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex justify-end">
-                          <button onClick={() => openEdit(c)} aria-label={`Editar capítulo ${c.number}`} className="rounded-lg p-2 text-slate-400 hover:bg-white/5 hover:text-white">
-                            <Icon name="edit" />
-                          </button>
-                        </div>
-                      </td>
+                       <td className="px-5 py-3.5">
+                         <div className="flex justify-end gap-1">
+                           <button onClick={() => openEdit(c)} aria-label={`Editar capítulo ${c.number}`} className="rounded-lg p-2 text-slate-400 hover:bg-white/5 hover:text-white">
+                             <Icon name="edit" />
+                           </button>
+                           <button onClick={() => setToDelete(c)} aria-label={`Excluir capítulo ${c.number}`} className="rounded-lg p-2 text-slate-400 hover:bg-red-500/10 hover:text-red-300">
+                             <Icon name="trash" />
+                           </button>
+                         </div>
+                       </td>
                     </tr>
                   );
                 })}
@@ -234,6 +256,23 @@ export default function ChaptersPage() {
               <option value="vip_only">Somente VIP</option>
             </select>
           </Field>
+        </Modal>
+      )}
+
+      {toDelete && (
+        <Modal
+          title="Excluir capítulo"
+          onClose={() => setToDelete(null)}
+          footer={
+            <>
+              <Btn variant="ghost" onClick={() => setToDelete(null)}>Cancelar</Btn>
+              <Btn variant="danger" onClick={remove} disabled={deleting}>{deleting ? "Excluindo…" : "Excluir"}</Btn>
+            </>
+          }
+        >
+          <p className="text-sm text-slate-300">
+            Tem certeza que deseja excluir <strong className="text-white">#{toDelete.number} · {toDelete.title}</strong>?
+          </p>
         </Modal>
       )}
 

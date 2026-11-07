@@ -42,10 +42,7 @@ func (h *ReaderHandler) requireAuth(w http.ResponseWriter, r *http.Request) (str
 }
 
 func (h *ReaderHandler) pages(w http.ResponseWriter, r *http.Request) {
-	userID, ok := h.requireAuth(w, r)
-	if !ok {
-		return
-	}
+	userID, _ := h.authSvc.UserIDFromSession(r) // anonymous allowed for public content
 	chapterID := chi.URLParam(r, "id")
 	if chapterID == "" {
 		http.Error(w, "chapter_id invalido", http.StatusBadRequest)

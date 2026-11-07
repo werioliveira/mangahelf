@@ -257,6 +257,7 @@ export function SeriesForm({ mode, series, onClose, onSubmit, busy }: Props) {
     <Modal
       title={mode === "edit" ? "Editar série" : "Nova série"}
       onClose={onClose}
+      size="full"
       footer={
         <>
           <Btn variant="ghost" onClick={onClose} disabled={busy}>
@@ -272,7 +273,7 @@ export function SeriesForm({ mode, series, onClose, onSubmit, busy }: Props) {
         {/* Sidebar de seções (desktop) */}
         <nav
           aria-label="Seções do formulário"
-          className="hidden shrink-0 md:block md:w-48 md:border-r md:border-white/5 md:pr-4"
+          className="hidden shrink-0 md:sticky md:top-0 md:block md:h-fit md:w-48 md:border-r md:border-white/5 md:pr-4 md:self-start"
         >
           <ul className="space-y-1">
             {sections.map((s) => (
@@ -553,12 +554,7 @@ export function SeriesForm({ mode, series, onClose, onSubmit, busy }: Props) {
               />
             </Field>
 
-            <div className="rounded-lg border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-xs text-amber-200/80">
-              <strong className="text-amber-200">Atenção:</strong> a permissão{" "}
-              <code className="rounded bg-black/30 px-1 py-0.5">chapter.set_access</code> controla quem pode alterar o
-              acesso. Cada grupo editorial controla apenas as próprias séries.
-            </div>
-          </FormSection>
+            </FormSection>
         </div>
       </div>
     </Modal>

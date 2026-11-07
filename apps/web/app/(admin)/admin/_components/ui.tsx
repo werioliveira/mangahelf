@@ -76,11 +76,13 @@ export function Modal({
   onClose,
   children,
   footer,
+  size = "md",
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
   footer: React.ReactNode;
+  size?: "sm" | "md" | "lg" | "full";
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -88,18 +90,25 @@ export function Modal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  const sizeCls = {
+    sm: "max-w-sm",
+    md: "max-w-lg",
+    lg: "max-w-3xl",
+    full: "max-w-[95vw] max-h-[95vh]",
+  }[size];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div role="dialog" aria-modal="true" className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-[#111830] shadow-2xl">
-        <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
+      <div role="dialog" aria-modal="true" className={`relative flex flex-col ${sizeCls} w-full rounded-2xl bg-[#111830] shadow-2xl ${size === "full" ? "overflow-hidden" : "border border-white/10"}`}>
+        <div className={`flex items-center justify-between px-6 py-4 ${size === "full" ? "" : "border-b border-white/5"}`}>
           <h3 className="text-base font-semibold text-white">{title}</h3>
           <button onClick={onClose} aria-label="Fechar" className="rounded-md p-1 text-slate-500 hover:bg-white/5 hover:text-white">
             <Icon name="x" className="h-5 w-5" />
           </button>
         </div>
-        <div className="space-y-4 px-6 py-5">{children}</div>
-        <div className="flex justify-end gap-2 border-t border-white/5 px-6 py-4">{footer}</div>
+        <div className={`space-y-4 px-6 py-5 ${size === "full" ? "overflow-y-auto flex-1" : ""}`}>{children}</div>
+        <div className={`flex justify-end gap-2 px-6 py-4 ${size === "full" ? "border-t border-white/5" : "border-t border-white/5"}`}>{footer}</div>
       </div>
     </div>
   );

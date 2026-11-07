@@ -1,5 +1,24 @@
 # Changelog — MangaShelf
 
+## Unreleased
+
+### Changed
+- Auth service: fixed Register/CreateOIDCUser/GetUserByEmail to use new schema columns (status, email_verified_at)
+- Migration 0001_core: added seed data (roles, permissions, role_permissions, user_roles) for admin user
+- Migration 0001_core: added missing tables (settings, vip_*, audit_log, bans), fixed JSON escaping in defaults
+- Media service: cover uploads no longer require series_id/chapter_number
+- Migration 0001_core: fixed broken defaults section, added admin user (admin@mangashelf.local / admin123)
+- Media handler: fixed route registration conflict (chi duplicate /admin mount)
+- package.json: restored dev/build/test/lint scripts, updated db:migrate to 0001_core
+- Access resolver: fixed isStaffOrEditor to join group_members -> role_permissions directly
+- Frontend chapters: added delete button with confirmation modal
+- Modal component: added size prop (sm/md/lg/full); SeriesForm now uses full-screen modal
+- SeriesForm: nav sidebar sticky, removed attention text, CoverUploader now shows local preview during upload
+- SeriesService: full CRUD with all fields (type, status, demography, original_language, release_year, cover_storage_key, public_at)
+- Media handler: routes moved under /admin, added kind and public_url to presign
+- Reader endpoint now allows anonymous access to public chapters (access control handled by CanRead resolver)
+- Admin handler: added POST/DELETE /admin/chapters and POST/PATCH/DELETE /admin/series endpoints
+
 ## 0.2.0 — 2026-11-05 · Auth & AuthZ Backend
 ### Adicionado
 - internal/auth: sistema completo de autenticação

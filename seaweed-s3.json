@@ -1,0 +1,11 @@
+﻿{
+  "identities": [
+    {
+      "name": "mangashelf",
+      "credentials": [
+        { "accessKey": "mangashelf", "secretKey": "mangashelf123" }
+      ],
+      "actions": ["Admin", "Read", "Write"]
+    }
+  ]
+}
